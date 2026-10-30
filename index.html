@@ -118,69 +118,18 @@ canvas{max-width:100%}
 .top-nav-icon{font-size:18px}
 .top-nav-label{font-size:9px;font-weight:700;letter-spacing:0.3px}
 </style>
-<link rel="manifest" id="pwa-manifest">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="application-name" content="Portfolio Tracker">
 <script>
-// Inline manifest injected as blob so it works from local file
-const _manifest = {
-  name: "Investment Portfolio Tracker",
-  short_name: "Portfolio",
-  description: "Track investments across Wadiaa, Tamluk and Ufuq portfolios",
-  start_url: ".",
-  display: "standalone",
-  orientation: "portrait-primary",
-  background_color: "#0D1117",
-  theme_color: "#0D1117",
-  icons: [
-    {
-      src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230D1117'/%3E%3Ctext x='256' y='340' text-anchor='middle' font-size='280' font-family='Arial' fill='%23C9A84C'%3E%F0%9F%93%88%3C/text%3E%3C/svg%3E",
-      sizes: "512x512",
-      type: "image/svg+xml",
-      purpose: "any maskable"
-    }
-  ],
-  categories: ["finance", "productivity"]
-};
-const _blob = new Blob([JSON.stringify(_manifest)], {type:'application/json'});
-document.getElementById('pwa-manifest').href = URL.createObjectURL(_blob);
-
-// Service Worker registration for offline capability
+// Real same-origin service worker file (not a Blob URL — Blob-URL registration is unreliable on
+// Android Chrome in particular). Silently does nothing if unsupported or served from file:// —
+// Service Workers require http(s), so this only activates once hosted (e.g. GitHub Pages).
 if('serviceWorker' in navigator){
-  const _swCode = `
-const CACHE='ipt-v1';
-const ASSETS=[
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
-];
-self.addEventListener('install', e=>{
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS).catch(()=>{})));
-  self.skipWaiting();
-});
-self.addEventListener('activate', e=>{
-  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
-  self.clients.claim();
-});
-self.addEventListener('fetch', e=>{
-  if(e.request.method!=='GET') return;
-  e.respondWith(
-    caches.match(e.request).then(cached=>{
-      if(cached) return cached;
-      return fetch(e.request).then(resp=>{
-        if(resp&&resp.status===200){
-          const clone=resp.clone();
-          caches.open(CACHE).then(c=>c.put(e.request,clone));
-        }
-        return resp;
-      }).catch(()=>cached);
-    })
-  );
-});
-  `;
-  const _swBlob = new Blob([_swCode], {type:'application/javascript'});
-  const _swUrl = URL.createObjectURL(_swBlob);
-  navigator.serviceWorker.register(_swUrl, {scope: './'})
+  navigator.serviceWorker.register('sw.js', {scope: './'})
     .then(()=>console.log('SW registered'))
-    .catch(e=>console.warn('SW failed (normal for local file):', e));
+    .catch(e=>console.warn('SW registration failed:', e));
 }
 </script>
 </head>
@@ -313,11 +262,184 @@ function defaultState(){return{
 
 function loadState(){try{const s=localStorage.getItem(STORE_KEY);const parsed=s?JSON.parse(s):defaultState();if(parsed.odRate===undefined)parsed.odRate=4.75;if(parsed.targetRoi===undefined)parsed.targetRoi=15;if(parsed.capitalRowLimit===undefined)parsed.capitalRowLimit=7;if(!parsed.loans)parsed.loans=[];if(!parsed.loanPayments)parsed.loanPayments=[];if(!parsed.equityFlows)parsed.equityFlows=[];if(!parsed.odFlows)parsed.odFlows=[];return parsed;}catch(e){return defaultState();}}
 function saveState(){
-  localStorage.setItem(STORE_KEY,JSON.stringify(state));}
+  localStorage.setItem(STORE_KEY,JSON.stringify(state));
+  syncConfig.localChangeSeq=(syncConfig.localChangeSeq||0)+1;
+  saveSyncConfig(syncConfig);
+}
 
 // ═══════════════════════════════════════════════════════════════
-// CLOUD SYNC ENGINE
+// GITHUB GIST SYNC — manual, whole-state push/pull (no auto-merge).
+// Credentials and sync bookkeeping are kept in a SEPARATE localStorage key from the app's own
+// state, so (a) "Export to JSON" never leaks the token, and (b) the Gist payload itself never
+// contains the token used to access it. The Gist you connect to should be a SECRET Gist
+// (gist.github.com → Create secret gist) — "secret" means unlisted, not access-controlled: treat
+// the Gist ID + URL as sensitive, since anyone with the exact link could read your data.
 // ═══════════════════════════════════════════════════════════════
+const SYNC_CONFIG_KEY='ipt_sync_config';
+const GITHUB_API='https://api.github.com';
+
+function loadSyncConfig(){
+  try{
+    const raw=localStorage.getItem(SYNC_CONFIG_KEY);
+    const cfg=raw?JSON.parse(raw):null;
+    if(cfg&&typeof cfg==='object'){
+      return{
+        gistId:typeof cfg.gistId==='string'?cfg.gistId:'',
+        token:typeof cfg.token==='string'?cfg.token:'',
+        filename:typeof cfg.filename==='string'&&cfg.filename?cfg.filename:'investment-portfolio-tracker-state.json',
+        lastSyncedAt:typeof cfg.lastSyncedAt==='string'?cfg.lastSyncedAt:null,
+        lastSyncedRemoteUpdatedAt:typeof cfg.lastSyncedRemoteUpdatedAt==='string'?cfg.lastSyncedRemoteUpdatedAt:null,
+        localChangeSeq:Number.isFinite(cfg.localChangeSeq)?cfg.localChangeSeq:0,
+        syncedSeq:Number.isFinite(cfg.syncedSeq)?cfg.syncedSeq:0,
+      };
+    }
+  }catch(e){}
+  return{gistId:'',token:'',filename:'investment-portfolio-tracker-state.json',lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:0,syncedSeq:0};
+}
+function saveSyncConfig(cfg){try{localStorage.setItem(SYNC_CONFIG_KEY,JSON.stringify(cfg));}catch(e){}}
+let syncConfig=loadSyncConfig();
+
+function isSyncConnected(){return!!(syncConfig.gistId&&syncConfig.token);}
+function isSyncDirty(){
+  if(!isSyncConnected())return false;
+  if(!syncConfig.lastSyncedAt)return true;
+  return syncConfig.localChangeSeq>syncConfig.syncedSeq;
+}
+function authHeaders(token){return{'Authorization':'token '+token,'Accept':'application/vnd.github+json'};}
+function syncApiErrorMessage(status){
+  if(status===401)return'Your access token was rejected — it may be invalid, expired, or missing the "gist" scope.';
+  if(status===404)return'Gist not found — check the Gist ID.';
+  if(status===403)return'GitHub blocked the request (rate limit or token scope) — try again shortly.';
+  return'GitHub returned an error (status '+status+').';
+}
+async function fetchGistFile(gistId,token,preferredFilename){
+  const res=await fetch(GITHUB_API+'/gists/'+encodeURIComponent(gistId),{headers:authHeaders(token)});
+  if(!res.ok)throw new Error(syncApiErrorMessage(res.status));
+  const gist=await res.json();
+  const files=gist.files||{};
+  let filename=preferredFilename,file=files[filename];
+  if(!file){
+    const names=Object.keys(files);
+    if(names.length===1){filename=names[0];file=files[filename];}
+  }
+  if(!file)throw new Error('No file named "'+preferredFilename+'" was found in that Gist.');
+  let content=file.content||'';
+  if(file.truncated&&file.raw_url){
+    const rawRes=await fetch(file.raw_url);
+    if(!rawRes.ok)throw new Error('Could not fetch the full Gist content.');
+    content=await rawRes.text();
+  }
+  return{content,updatedAt:gist.updated_at,filename};
+}
+async function pushToGist(gistId,token,filename,jsonText){
+  const res=await fetch(GITHUB_API+'/gists/'+encodeURIComponent(gistId),{
+    method:'PATCH',
+    headers:Object.assign({'Content-Type':'application/json'},authHeaders(token)),
+    body:JSON.stringify({files:{[filename]:{content:jsonText}}})
+  });
+  if(!res.ok)throw new Error(syncApiErrorMessage(res.status));
+  const gist=await res.json();
+  return{updatedAt:gist.updated_at};
+}
+function connectSync(){
+  const gistId=document.getElementById('sync-gist-id').value.trim();
+  const token=document.getElementById('sync-token').value.trim();
+  if(!gistId||!token){showToast('Enter both the Gist ID and your access token',true);return;}
+  syncConfig={gistId,token,filename:syncConfig.filename||'investment-portfolio-tracker-state.json',lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:syncConfig.localChangeSeq||1,syncedSeq:0};
+  saveSyncConfig(syncConfig);
+  render();
+  showToast('Connected — push or pull to sync ✓');
+}
+function disconnectSync(){
+  if(!confirm('Disconnect from the Gist? Your local data is unaffected — this only forgets the connection on this device.'))return;
+  syncConfig={gistId:'',token:'',filename:syncConfig.filename,lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:syncConfig.localChangeSeq,syncedSeq:0};
+  saveSyncConfig(syncConfig);
+  render();
+  showToast('Disconnected');
+}
+async function syncPushNow(){
+  const cfg=syncConfig;
+  if(!isSyncConnected()){showToast('Connect to a Gist first',true);return;}
+  const btn=document.getElementById('sync-push-btn');
+  if(btn){btn.disabled=true;btn.textContent='Pushing…';}
+  try{
+    const seqAtPushTime=cfg.localChangeSeq;
+    const jsonText=JSON.stringify(state,null,2);
+    const result=await pushToGist(cfg.gistId,cfg.token,cfg.filename,jsonText);
+    cfg.syncedSeq=seqAtPushTime;
+    cfg.lastSyncedAt=new Date().toISOString();
+    cfg.lastSyncedRemoteUpdatedAt=result.updatedAt;
+    saveSyncConfig(cfg);
+    render();
+    showToast('Pushed to Gist ✓');
+  }catch(e){
+    showToast(e.message||'Push failed',true);
+  }
+}
+async function syncPullNow(){
+  const cfg=syncConfig;
+  if(!isSyncConnected()){showToast('Connect to a Gist first',true);return;}
+  if(!confirm('This replaces ALL data on this device with what\'s saved in the Gist. Anything entered here since your last sync will be lost unless you push first. Continue?'))return;
+  const btn=document.getElementById('sync-pull-btn');
+  if(btn){btn.disabled=true;btn.textContent='Pulling…';}
+  try{
+    const remote=await fetchGistFile(cfg.gistId,cfg.token,cfg.filename);
+    cfg.filename=remote.filename;
+    if(!remote.content||!remote.content.trim()){showToast('Gist is empty — push from here first',true);render();return;}
+    const parsed=JSON.parse(remote.content);
+    if(!parsed||!parsed.portfolios){showToast('Gist content is not a valid backup',true);render();return;}
+    state=parsed;
+    if(state.odRate===undefined)state.odRate=4.75;
+    if(state.targetRoi===undefined)state.targetRoi=15;
+    if(state.capitalRowLimit===undefined)state.capitalRowLimit=7;
+    if(!state.loans)state.loans=[];
+    if(!state.loanPayments)state.loanPayments=[];
+    if(!state.equityFlows)state.equityFlows=[];
+    if(!state.odFlows)state.odFlows=[];
+    localStorage.setItem(STORE_KEY,JSON.stringify(state));
+    cfg.syncedSeq=cfg.localChangeSeq; // pulling also counts as "caught up"
+    cfg.lastSyncedAt=new Date().toISOString();
+    cfg.lastSyncedRemoteUpdatedAt=remote.updatedAt;
+    saveSyncConfig(cfg);
+    currentPortfolio=state.portfolios[0]?.id||'wadiaa';
+    currentTab='dashboard';
+    render();
+    showToast('Pulled from Gist ✓');
+  }catch(e){
+    showToast(e.message||'Pull failed',true);
+    render();
+  }
+}
+function syncStatusHTML(){
+  if(!isSyncConnected())return'<div style="color:var(--muted);font-size:12px">Not connected</div>';
+  const dirty=isSyncDirty();
+  const last=syncConfig.lastSyncedAt?fmtDate(syncConfig.lastSyncedAt)+' '+new Date(syncConfig.lastSyncedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'Never';
+  return'<div style="color:'+(dirty?'var(--gold)':'var(--green)')+';font-size:12px;font-weight:600">'+(dirty?'⚠ Unsynced changes on this device':'✓ Synced with the Gist')+'</div>'
+    +'<div style="color:var(--muted);font-size:11px;margin-top:2px">Last synced: '+last+'</div>';
+}
+function syncSectionHTML(){
+  const connected=isSyncConnected();
+  return'<div class="section-label">GitHub Gist Sync</div>'
+    +'<div class="card" style="margin-bottom:10px">'
+    +'<div style="color:var(--text);font-size:14px;font-weight:700;margin-bottom:4px">Cross-Device Backup (Secret Gist)</div>'
+    +'<div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:14px">Push saves a full copy of your data to a private GitHub Gist you control. Pull loads it back — useful to carry your data to another device. '
+    +'<b style="color:var(--gold)">This does not replace the JSON backup below</b> — keep making those too. '
+    +'A "secret" Gist is unlisted, not access-controlled: treat the Gist ID and your token as sensitive, since anyone with the exact link could read it.</div>'
+    +(connected?(
+      '<div style="margin-bottom:14px">'+syncStatusHTML()+'</div>'
+      +'<div style="display:flex;gap:8px;margin-bottom:8px">'
+      +'<button class="btn btn-gold" id="sync-push-btn" style="margin:0" onclick="syncPushNow()">↑ Push</button>'
+      +'<button class="btn btn-ghost" id="sync-pull-btn" style="margin:0" onclick="syncPullNow()">↓ Pull</button>'
+      +'</div>'
+      +'<button class="btn btn-ghost" style="margin:0" onclick="disconnectSync()">Disconnect</button>'
+    ):(
+      '<div class="field"><label>Secret Gist ID</label><input id="sync-gist-id" type="text" placeholder="32-character ID from the Gist URL" value="'+(syncConfig.gistId||'')+'"></div>'
+      +'<div class="field"><label>Personal Access Token (gist scope)</label><input id="sync-token" type="password" placeholder="ghp_..."></div>'
+      +'<button class="btn btn-gold" style="margin:0" onclick="connectSync()">Connect</button>'
+    ))
+    +'</div>';
+}
+
 // PORTFOLIO HELPERS
 function pData(pid){return state[pid]||{investments:[],payments:[],nextInvId:1,nextPayId:1};}
 function pInfo(pid){return state.portfolios.find(p=>p.id===pid)||{id:pid,name:pid,color:'#8B949E',owner:''};}
@@ -1181,6 +1303,7 @@ function setupHTML(){
     +'<div class="section-label">Portfolios</div>'
     +'<div class="card" style="margin-bottom:10px">'+portMgmt
     +'<button class="btn btn-ghost" style="margin-top:10px" onclick="openAddPortfolio()">+ Add Portfolio</button></div>'
+    +syncSectionHTML()
     +'<div class="section-label">Export</div>'
     +'<div class="card" style="margin-bottom:10px">'
     +'<div style="color:var(--text);font-size:14px;font-weight:700;margin-bottom:4px">Export to JSON</div>'
