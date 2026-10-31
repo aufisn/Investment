@@ -108,6 +108,9 @@ canvas{max-width:100%}
 .lock-bio-btn{width:100%;max-width:320px;display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:var(--gold);color:#000;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:6px}
 .lock-bio-btn:active{opacity:0.85}
 .lock-or{color:var(--dim);font-size:12px;margin:12px 0 14px;text-align:center}
+.enc-notice{background:var(--green-bg);border:1px solid #2EA04366;border-radius:10px;padding:10px 12px;color:#56D364;font-size:12px;line-height:1.6;margin-bottom:12px}
+.enc-notice b{color:#7EE787}
+.enc-notice.warn{background:var(--gold-bg);border-color:var(--gold-dim);color:var(--gold)}
 .lock-hint{color:var(--dim);font-size:11px;margin-top:32px;text-align:center}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 
@@ -218,7 +221,7 @@ if('serviceWorker' in navigator){
 <div class="toast" id="toast"></div>
 <script>
 const STORE_KEY='saf_v7';
-let state=loadState();
+let state=null; // loaded (and decrypted) by loadSecureData() at unlock, cleared again on lock
 let currentTab='dashboard',currentPortfolio='wadiaa',detailId=null,detailPortfolio=null;
 let installPrompt=null,showInstallBanner=!localStorage.getItem('saf_installed');
 let invStatusFilter='All',invSourceFilter='All',payFilter='All',rptChartInstances={},dashChartInstances={};
@@ -322,7 +325,6 @@ function defaultState(){return{
   },
 };}
 
-function loadState(){try{const s=localStorage.getItem(STORE_KEY);const parsed=s?JSON.parse(s):defaultState();if(parsed.odRate===undefined)parsed.odRate=4.75;if(parsed.targetRoi===undefined)parsed.targetRoi=15;if(parsed.capitalRowLimit===undefined)parsed.capitalRowLimit=7;if(!parsed.loans)parsed.loans=[];if(!parsed.loanPayments)parsed.loanPayments=[];if(!parsed.equityFlows)parsed.equityFlows=[];if(!parsed.odFlows)parsed.odFlows=[];return parsed;}catch(e){return defaultState();}}
 // opts.label — describe a whole-state replacement (import, reset) instead of diffing it
 // opts.snapshot — take a restorable snapshot of the previous data before saving
 // opts.silent — no Undo toast (the caller shows its own message)
@@ -333,7 +335,7 @@ function saveState(opts){
   if(prevJSON===nextJSON)return;
   if(opts.snapshot)takeSnapshot(opts.label?'Before: '+opts.label:'Before a bulk change',prevJSON);
   else maybeDailySnapshot(prevJSON);
-  localStorage.setItem(STORE_KEY,nextJSON);
+  secureWrite(STORE_KEY,nextJSON);
   _lastSavedJSON=nextJSON;
   syncConfig.localChangeSeq=(syncConfig.localChangeSeq||0)+1;
   saveSyncConfig(syncConfig);
@@ -352,32 +354,83 @@ function saveState(opts){
 // and the previous copy is kept in an in-memory undo stack. Snapshots (full copies, kept on this
 // device) are taken automatically once a day and before any bulk replacement (import, reset,
 // Gist pull, restoring another snapshot), so a bad change can always be rolled back.
-// History and snapshots live in their own keys, so JSON exports and Gist pushes stay unchanged.
+// History and snapshots live in their own keys (encrypted like the data), so JSON exports and
+// Gist pushes stay unchanged.
 // ═══════════════════════════════════════════════════════════════
 const HISTORY_KEY='ipt_history',SNAPSHOT_KEY='ipt_snapshots';
 const HISTORY_MAX=300,SNAPSHOT_MAX=10,UNDO_DEPTH=20;
-let _lastSavedJSON=JSON.stringify(state);
+let _lastSavedJSON=null; // set by loadSecureData()
 let _undoStack=[];
 let _pendingUndoToast=null;
 
-function loadJSONKey(k,fallback){try{const v=JSON.parse(localStorage.getItem(k));return v==null?fallback:v;}catch(e){return fallback;}}
-function storeJSONKey(k,v){
-  try{localStorage.setItem(k,JSON.stringify(v));return true;}
-  catch(e){console.warn('Could not save '+k,e);return false;}
+// ENCRYPTION AT REST — the app data (saf_v7), history and snapshots are stored as
+// {__ipt_enc:1, iv, ct}: AES-256-GCM under the data key (see PASSWORD / LOCK ENGINE), which only
+// exists in memory while unlocked. Nothing is decrypted before unlock, and lockApp() drops the
+// decrypted copies from memory. Without WebCrypto (plain-http hosting) storage stays as plain JSON.
+// Writes are asynchronous (encryption), so they're chained to land in the order they were made.
+let _historyCache=[],_snapshotsCache=[];
+let _writeChain=Promise.resolve();
+function isEncBlob(v){return!!(v&&typeof v==='object'&&v.__ipt_enc===1&&v.iv&&v.ct);}
+function storedIsEncrypted(k){try{return isEncBlob(JSON.parse(localStorage.getItem(k)));}catch(e){return false;}}
+function secureWrite(k,value){
+  const text=typeof value==='string'?value:JSON.stringify(value);
+  const key=_sessionKey;
+  const job=_writeChain.then(async()=>{
+    try{
+      const out=key&&HAS_SUBTLE?JSON.stringify(Object.assign({__ipt_enc:1},await encryptSecret(text,key))):text;
+      localStorage.setItem(k,out);return true;
+    }catch(e){console.warn('Could not save '+k,e);return false;}
+  });
+  _writeChain=job.then(()=>{},()=>{});
+  return job;
 }
-function loadHistory(){return loadJSONKey(HISTORY_KEY,[]);}
+async function readSecure(k,fallback){
+  const raw=localStorage.getItem(k);
+  if(raw==null)return fallback;
+  const v=JSON.parse(raw);
+  if(!isEncBlob(v))return v;
+  if(!_sessionKey)throw new Error('Data is encrypted and the app is locked');
+  return JSON.parse(await decryptSecret(v));
+}
+// Called by finishUnlock(): decrypts (or, first time, encrypts) everything and fills the caches
+async function loadSecureData(){
+  const raw=localStorage.getItem(STORE_KEY);
+  let json=null;
+  if(raw!=null){
+    const v=JSON.parse(raw);
+    json=isEncBlob(v)?await decryptSecret(v):raw;
+  }
+  adoptState(json||JSON.stringify(defaultState()));
+  _lastSavedJSON=JSON.stringify(state);
+  _historyCache=await readSecure(HISTORY_KEY,[]).catch(()=>[]);
+  _snapshotsCache=await readSecure(SNAPSHOT_KEY,[]).catch(()=>[]);
+  _undoStack=[];
+  // One-time migration: anything still stored as plain text is rewritten encrypted
+  if(_sessionKey){
+    if(!storedIsEncrypted(STORE_KEY))await secureWrite(STORE_KEY,_lastSavedJSON);
+    if(localStorage.getItem(HISTORY_KEY)!=null&&!storedIsEncrypted(HISTORY_KEY))await secureWrite(HISTORY_KEY,_historyCache);
+    if(localStorage.getItem(SNAPSHOT_KEY)!=null&&!storedIsEncrypted(SNAPSHOT_KEY))await secureWrite(SNAPSHOT_KEY,_snapshotsCache);
+  }
+}
+function wipeSecureData(){
+  state=null;_lastSavedJSON=null;_historyCache=[];_snapshotsCache=[];_undoStack=[];_pendingUndoToast=null;
+}
+function dataIsEncrypted(){return storedIsEncrypted(STORE_KEY);}
+function loadHistory(){return _historyCache;}
 function recordHistory(lines){
-  const h=loadHistory();
-  h.unshift({ts:new Date().toISOString(),lines});
-  storeJSONKey(HISTORY_KEY,h.slice(0,HISTORY_MAX));
+  _historyCache.unshift({ts:new Date().toISOString(),lines});
+  _historyCache=_historyCache.slice(0,HISTORY_MAX);
+  secureWrite(HISTORY_KEY,_historyCache);
 }
-function loadSnapshots(){return loadJSONKey(SNAPSHOT_KEY,[]);}
+function loadSnapshots(){return _snapshotsCache;}
 function takeSnapshot(reason,json){
-  const snaps=loadSnapshots();
-  snaps.unshift({id:Date.now().toString(36),ts:new Date().toISOString(),reason,data:json||JSON.stringify(state)});
-  // Oldest snapshots drop off first; if storage is full, keep trimming until it fits
-  let keep=snaps.slice(0,SNAPSHOT_MAX);
-  while(keep.length&&!storeJSONKey(SNAPSHOT_KEY,keep))keep=keep.slice(0,-1);
+  _snapshotsCache.unshift({id:Date.now().toString(36),ts:new Date().toISOString(),reason,data:json||JSON.stringify(state)});
+  _snapshotsCache=_snapshotsCache.slice(0,SNAPSHOT_MAX);
+  persistSnapshots();
+}
+// Oldest snapshots drop off first; if storage is full, keep trimming until it fits
+async function persistSnapshots(){
+  while(_snapshotsCache.length&&!(await secureWrite(SNAPSHOT_KEY,_snapshotsCache)))_snapshotsCache=_snapshotsCache.slice(0,-1);
 }
 function maybeDailySnapshot(prevJSON){
   const today=new Date().toISOString().slice(0,10);
@@ -440,7 +493,7 @@ function undoLast(){
   if(!u){showToast('Nothing to undo',true);return;}
   const currentJSON=JSON.stringify(state);
   adoptState(u.json);
-  localStorage.setItem(STORE_KEY,u.json);
+  secureWrite(STORE_KEY,u.json);
   _lastSavedJSON=u.json;
   syncConfig.localChangeSeq=(syncConfig.localChangeSeq||0)+1;
   saveSyncConfig(syncConfig);
@@ -461,7 +514,7 @@ function restoreSnapshot(id){
 function snapshotNow(){takeSnapshot('Manual snapshot');render();showToast('Snapshot saved ✓');}
 function clearHistory(){
   if(!confirm('Clear the change history on this device? Your data and snapshots are not affected.'))return;
-  storeJSONKey(HISTORY_KEY,[]);render();showToast('History cleared');
+  _historyCache=[];secureWrite(HISTORY_KEY,[]);render();showToast('History cleared');
 }
 function fmtStamp(ts){const d=new Date(ts);return fmtDate(d)+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
 function historySectionHTML(){
@@ -514,6 +567,7 @@ function loadSyncConfig(){
         gistId:typeof cfg.gistId==='string'?cfg.gistId:'',
         token:typeof cfg.token==='string'?cfg.token:'', // legacy plaintext; encrypted on next unlock
         tokenEnc:cfg.tokenEnc&&cfg.tokenEnc.iv&&cfg.tokenEnc.ct?cfg.tokenEnc:null,
+        syncKey:cfg.syncKey&&cfg.syncKey.id&&cfg.syncKey.wrap&&cfg.syncKey.pwd?cfg.syncKey:null,
         filename:typeof cfg.filename==='string'&&cfg.filename?cfg.filename:'investment-portfolio-tracker-state.json',
         lastSyncedAt:typeof cfg.lastSyncedAt==='string'?cfg.lastSyncedAt:null,
         lastSyncedRemoteUpdatedAt:typeof cfg.lastSyncedRemoteUpdatedAt==='string'?cfg.lastSyncedRemoteUpdatedAt:null,
@@ -522,7 +576,7 @@ function loadSyncConfig(){
       };
     }
   }catch(e){}
-  return{gistId:'',token:'',tokenEnc:null,filename:'investment-portfolio-tracker-state.json',lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:0,syncedSeq:0};
+  return{gistId:'',token:'',tokenEnc:null,syncKey:null,filename:'investment-portfolio-tracker-state.json',lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:0,syncedSeq:0};
 }
 // The decrypted token only ever lives in memory. A plaintext token is written back only while no
 // encrypted copy exists yet (legacy config awaiting migration, or no WebCrypto), so it's never lost.
@@ -584,18 +638,77 @@ async function connectSync(){
   if(!gistId||!token){showToast('Enter both the Gist ID and your access token',true);return;}
   if(!(await ensureSessionKey('Your password is needed to store the access token encrypted.')))return;
   const tokenEnc=_sessionKey?await encryptSecret(token):null;
-  syncConfig={gistId,token,tokenEnc,filename:syncConfig.filename||'investment-portfolio-tracker-state.json',lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:syncConfig.localChangeSeq||1,syncedSeq:0};
+  syncConfig={gistId,token,tokenEnc,syncKey:syncConfig.syncKey||null,filename:syncConfig.filename||'investment-portfolio-tracker-state.json',lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:syncConfig.localChangeSeq||1,syncedSeq:0};
   saveSyncConfig(syncConfig);
   render();
   showToast('Connected — push or pull to sync ✓');
 }
 function disconnectSync(){
   if(!confirm('Disconnect from the Gist? Your local data is unaffected — this only forgets the connection on this device.'))return;
-  syncConfig={gistId:'',token:'',tokenEnc:null,filename:syncConfig.filename,lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:syncConfig.localChangeSeq,syncedSeq:0};
+  syncConfig={gistId:'',token:'',tokenEnc:null,syncKey:syncConfig.syncKey||null,filename:syncConfig.filename,lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:syncConfig.localChangeSeq,syncedSeq:0};
   saveSyncConfig(syncConfig);
   render();
   showToast('Disconnected');
 }
+// GIST ENCRYPTION — the Gist holds {format:'ipt-encrypted-v1', keyId, kdf, keyWrap, data}.
+// data is the app state encrypted with a random "sync key". keyWrap is that sync key encrypted
+// with a key derived from the app password (PBKDF2, salt in kdf), so any device that knows the
+// password can open it. Each device also keeps the sync key wrapped by its own data key
+// (syncConfig.syncKey), so later pushes/pulls need no password — only the first pull on a new
+// device, or after another device started a fresh sync key, asks for it.
+const GIST_FORMAT='ipt-encrypted-v1';
+async function localSyncKey(){
+  const sk=syncConfig.syncKey;
+  if(!sk||!_sessionKey)return null;
+  try{return await unwrapKey(_sessionKey,sk.wrap);}catch(e){return null;}
+}
+async function rememberSyncKey(id,key,pwdBlock){
+  syncConfig.syncKey={id,wrap:await wrapKey(_sessionKey,key),pwd:pwdBlock};
+  saveSyncConfig(syncConfig);
+}
+async function ensureSyncKeyForPush(){
+  const existing=await localSyncKey();
+  if(existing)return{key:existing,rec:syncConfig.syncKey};
+  const pwd=await askPassword('Encrypt your Gist copy','Enter your app password. Other devices will need this password the first time they pull.');
+  if(pwd==null)return null;
+  const v=await verifyPwd(pwd);
+  if(!v.ok){showToast('Incorrect password',true);return null;}
+  if(v.key)_sessionKey=v.key;
+  const key=await newDataKey(),salt=crypto.getRandomValues(new Uint8Array(16));
+  const d=await derivePwd(pwd,salt,PBKDF2_ITER);
+  await rememberSyncKey(b64url(crypto.getRandomValues(new Uint8Array(9))),key,{salt:b64(salt),iter:PBKDF2_ITER,wrap:await wrapKey(d.kek,key)});
+  return{key,rec:syncConfig.syncKey};
+}
+async function encryptForGist(jsonText){
+  const sk=await ensureSyncKeyForPush();
+  if(!sk)return null;
+  return JSON.stringify({format:GIST_FORMAT,app:'Investment Portfolio Tracker',note:'Encrypted backup — open it in the app with your app password.',
+    keyId:sk.rec.id,kdf:{name:'PBKDF2-SHA256',salt:sk.rec.pwd.salt,iter:sk.rec.pwd.iter},keyWrap:sk.rec.pwd.wrap,data:await encryptSecret(jsonText,sk.key)},null,2);
+}
+// Returns the decrypted state JSON, or null if the user cancelled / the password was wrong
+async function decryptFromGist(p){
+  let key=null;
+  if(syncConfig.syncKey&&syncConfig.syncKey.id===p.keyId)key=await localSyncKey();
+  if(!key){
+    const pwd=await askPassword('Open the encrypted Gist copy','Enter the app password used on the device that pushed this data.');
+    if(pwd==null)return null;
+    try{
+      const d=await derivePwd(pwd,unb64(p.kdf.salt),p.kdf.iter||PBKDF2_ITER);
+      key=await unwrapKey(d.kek,p.keyWrap);
+    }catch(e){showToast('That password doesn\'t open this Gist copy',true);return null;}
+    if(_sessionKey)await rememberSyncKey(p.keyId,key,{salt:p.kdf.salt,iter:p.kdf.iter,wrap:p.keyWrap});
+  }
+  return decryptSecret(p.data,key);
+}
+// After a password change, re-wrap the portable copy of the sync key under the new password
+async function rewrapSyncKeyForPassword(newPwd){
+  const key=await localSyncKey();
+  if(!key)return;
+  const salt=crypto.getRandomValues(new Uint8Array(16)),d=await derivePwd(newPwd,salt,PBKDF2_ITER);
+  syncConfig.syncKey.pwd={salt:b64(salt),iter:PBKDF2_ITER,wrap:await wrapKey(d.kek,key)};
+  saveSyncConfig(syncConfig);
+}
+
 // The token may still be encrypted after a fingerprint unlock on a device without PRF support
 async function syncTokenReady(){
   if(syncConfig.token)return true;
@@ -606,12 +719,14 @@ async function syncTokenReady(){
 async function syncPushNow(){
   const cfg=syncConfig;
   if(!isSyncConnected()){showToast('Connect to a Gist first',true);return;}
+  if(!HAS_SUBTLE){showToast('Encrypted sync needs the app\'s secure (https) address',true);return;}
   if(!(await syncTokenReady()))return;
+  const seqAtPushTime=cfg.localChangeSeq;
+  const jsonText=await encryptForGist(JSON.stringify(state));
+  if(!jsonText)return;
   const btn=document.getElementById('sync-push-btn');
   if(btn){btn.disabled=true;btn.textContent='Pushing…';}
   try{
-    const seqAtPushTime=cfg.localChangeSeq;
-    const jsonText=JSON.stringify(state,null,2);
     const result=await pushToGist(cfg.gistId,cfg.token,cfg.filename,jsonText);
     cfg.syncedSeq=seqAtPushTime;
     cfg.lastSyncedAt=new Date().toISOString();
@@ -634,10 +749,15 @@ async function syncPullNow(){
     const remote=await fetchGistFile(cfg.gistId,cfg.token,cfg.filename);
     cfg.filename=remote.filename;
     if(!remote.content||!remote.content.trim()){showToast('Gist is empty — push from here first',true);render();return;}
-    const parsed=JSON.parse(remote.content);
+    let content=remote.content,parsed=JSON.parse(content);
+    if(parsed&&parsed.format===GIST_FORMAT){            // encrypted copy (plain copies from older versions still load)
+      content=await decryptFromGist(parsed);
+      if(content==null){render();return;}
+      parsed=JSON.parse(content);
+    }
     if(!parsed||!parsed.portfolios){showToast('Gist content is not a valid backup',true);render();return;}
     const prevJSON=_lastSavedJSON;
-    adoptState(remote.content);
+    adoptState(content);
     const pulledJSON=JSON.stringify(state);
     if(pulledJSON!==prevJSON){
       takeSnapshot('Before Gist pull',prevJSON);
@@ -645,7 +765,7 @@ async function syncPullNow(){
       let lines=[];try{lines=describeChanges(JSON.parse(prevJSON),state).slice(0,20);}catch(e){}
       recordHistory(['Pulled data from the Gist'].concat(lines));
     }
-    localStorage.setItem(STORE_KEY,pulledJSON);
+    secureWrite(STORE_KEY,pulledJSON);
     _lastSavedJSON=pulledJSON;
     cfg.syncedSeq=cfg.localChangeSeq; // pulling also counts as "caught up"
     cfg.lastSyncedAt=new Date().toISOString();
@@ -672,9 +792,9 @@ function syncSectionHTML(){
   return'<div class="section-label">GitHub Gist Sync</div>'
     +'<div class="card" style="margin-bottom:10px">'
     +'<div style="color:var(--text);font-size:14px;font-weight:700;margin-bottom:4px">Cross-Device Backup (Secret Gist)</div>'
-    +'<div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:14px">Push saves a full copy of your data to a private GitHub Gist you control. Pull loads it back — useful to carry your data to another device. '
+    +'<div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:14px">Push saves an <b style="color:var(--green)">encrypted</b> copy of your data to a GitHub Gist you control — GitHub only ever sees scrambled data. Pull loads it back, e.g. on another device, which asks once for the app password of the device that pushed it. '
     +'<b style="color:var(--gold)">This does not replace the JSON backup below</b> — keep making those too. '
-    +'A "secret" Gist is unlisted, not access-controlled: treat the Gist ID and your token as sensitive, since anyone with the exact link could read it.</div>'
+    +'Keep the Gist ID and your token private all the same.</div>'
     +(connected?(
       '<div style="margin-bottom:14px">'+syncStatusHTML()+'</div>'
       +'<div style="display:flex;gap:8px;margin-bottom:8px">'
@@ -1644,6 +1764,7 @@ function setupHTML(){
     +'<div><div style="color:var(--text);font-size:14px;font-weight:700">App Password</div>'
     +'<div style="color:var(--muted);font-size:12px;margin-top:2px">Required every time the app is opened</div></div>'
     +'<span class="badge badge-green">Active</span></div>'
+    +encryptionNoticeHTML()
     +'<div style="display:flex;gap:8px">'
     +'<button class="btn btn-gold" style="margin:0;flex:1;padding:12px" onclick="openChangePwd()">Change Password</button>'
     +'<button class="btn btn-ghost" style="margin:0;flex:1;padding:12px" onclick="lockApp()">🔒 Lock Now</button>'
@@ -3276,10 +3397,18 @@ function submitAskPassword(){
 
 // Shared by password and biometric unlock
 async function finishUnlock(key){
-  _unlocked = true;
   _sessionKey = key;
-  markActive();
   await unlockSyncToken();
+  try{ await loadSecureData(); }
+  catch(e){
+    console.error('Could not decrypt app data:', e);
+    _sessionKey = null; wipeSecureData();
+    document.getElementById('lock-error').textContent = HAS_SUBTLE ? 'Could not decrypt your data on this device' : 'Your data is encrypted — open the app from its secure (https) address';
+    return;
+  }
+  migratePaymentsIfNeeded();
+  _unlocked = true;
+  markActive();
   document.getElementById('lock-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   document.getElementById('lock-error').textContent = '';
@@ -3364,6 +3493,7 @@ async function doBioUnlock(){
   const rec = loadBio();
   if(!rec || _bioInFlight || _unlocked) return;
   const err = document.getElementById('lock-error');
+  if(!rec.prf){ err.textContent = 'This device\'s fingerprint can\'t decrypt your data — use your password, then turn biometric unlock off and on again in Setup'; return; }
   _bioInFlight = true;
   err.textContent = '';
   try{
@@ -3409,10 +3539,12 @@ async function enableBio(){
       if(out){ rec.dekWrap = await wrapKey(await prfToKey(out), res.key); rec.prf = true; }
       else rec.prf = false;
     }
+    // Data is encrypted with the data key, so a fingerprint is only useful if it can release that key
+    if(!rec.prf){ showToast('This device\'s fingerprint can\'t unlock encrypted data — keep using your password', true); return; }
     localStorage.setItem(BIO_KEY, JSON.stringify(rec));
     updateLockHint();
     render();
-    showToast(rec.prf ? 'Biometric unlock on ✓' : 'Biometric unlock on — Gist sync will ask for your password');
+    showToast('Biometric unlock on ✓');
   }catch(e){
     console.warn('Passkey creation failed:', e);
     showToast(e.name === 'NotAllowedError' ? 'Cancelled — biometric unlock not turned on' : 'Could not set up biometric unlock', true);
@@ -3453,17 +3585,21 @@ document.addEventListener('visibilitychange', () => {
   if(autoLockDue()) lockApp();
   else if(!_unlocked && loadBio()) setTimeout(doBioUnlock, 250);
 });
+function encryptionNoticeHTML(){
+  if(HAS_SUBTLE&&dataIsEncrypted())return'<div class="enc-notice">🔒 Portfolio data, history, snapshots, the sync token and the Gist copy are encrypted (AES-256). The key is unlocked by your password or fingerprint. <b>If you forget your password, the data on this device can\'t be recovered</b> — restore from a JSON backup or the Gist.</div>';
+  return'<div class="enc-notice warn">⚠ Your data is not encrypted on this page. Open the app from its secure (https) address — e.g. your GitHub Pages link — to turn encryption on automatically.</div>';
+}
 function securityExtrasHTML(){
   const bio = loadBio();
   let bioBody;
   if(!bioApiPresent()) bioBody = '<div style="color:var(--muted);font-size:12px;line-height:1.6">Not available here. Open the app from its secure web address (e.g. your GitHub Pages link), not as a file, on a device with fingerprint or face unlock.</div>';
   else if(_bioPlatform === null) bioBody = '<div style="color:var(--muted);font-size:12px">Checking this device…</div>';
   else if(bio) bioBody = '<div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:12px">'
-      + (bio.prf ? 'Your fingerprint or face unlocks the app and your Gist sync.' : 'Your fingerprint or face unlocks the app. This device can\'t release the sync key biometrically, so Gist Push / Pull asks for your password once per session.')
-      + ' Your password still works at any time.</div>'
+      + (bio.prf ? 'Your fingerprint or face unlocks the app, decrypts your data and your Gist sync. Your password still works at any time.' : 'Set up with an older version that can\'t decrypt your data. Turn it off and on again to upgrade — if this device can\'t, keep using your password.')
+      + '</div>'
       + '<button class="btn btn-ghost" style="margin:0" onclick="disableBio()">Turn Off</button>';
   else if(!_bioPlatform) bioBody = '<div style="color:var(--muted);font-size:12px;line-height:1.6">This device has no fingerprint or face unlock set up for apps. Set one up in your phone\'s settings, then reopen this page.</div>';
-  else bioBody = '<div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:12px">Unlock with your phone\'s fingerprint or face instead of typing your password. Your password keeps working as a fallback.</div>'
+  else bioBody = '<div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:12px">Unlock with your phone\'s fingerprint or face instead of typing your password. Your password keeps working as a fallback. Needs a device that can release the encryption key biometrically — the app checks when you turn it on.</div>'
       + '<button class="btn btn-gold" style="margin:0" onclick="enableBio()">Turn On</button>';
   const sel = autoLockSetting();
   return '<div class="card" style="margin-bottom:10px">'
@@ -3507,9 +3643,12 @@ function updateTargetRoi(){
 }
 function lockApp(){
   _unlocked = false;
+  closeModal();
+  clearTimeout(_chartTimer);
+  // Drop every decrypted copy from memory once pending encrypted writes have used the key
+  wipeSecureData(); document.getElementById('view').innerHTML = '';
   _sessionKey = null;
   if(syncConfig.tokenEnc) syncConfig.token = ''; // drop the decrypted token from memory
-  closeModal();
   updateLockHint();
   document.getElementById('app').style.display = 'none';
   document.getElementById('fab').style.display = 'none';
@@ -3545,6 +3684,7 @@ async function changePassword(oldPwd, newPwd, confirmPwd){
     await createPwdRecord(newPwd, res.key);
     _sessionKey = res.key;
     await unlockSyncToken();
+    await rewrapSyncKeyForPassword(newPwd); // next push carries the new password's wrap
   } else {
     localStorage.setItem(PWD_KEY, hashPwd(newPwd));
   }
@@ -3621,8 +3761,7 @@ function migratePaymentsIfNeeded(){
   if(migrated){saveState({label:'Converted payments to the principal/profit format',silent:true});console.log('Payment data migrated to unified format');}
 }
 
-// App starts locked — render() called after unlock
-migratePaymentsIfNeeded();
+// App starts locked — data is loaded, migrated and rendered by finishUnlock()
 </script>
 </body>
 </html>

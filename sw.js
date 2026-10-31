@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ipt-v5'; // bump this string on every deploy that changes a precached file
+const CACHE_NAME = 'ipt-v6'; // bump this string on every deploy that changes a precached file
 const PRECACHE_URLS = [
   './', './index.html', './manifest.json',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png',
