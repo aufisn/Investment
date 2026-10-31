@@ -12,7 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
-:root{--bg:#0D1117;--surface:#161B22;--card:#1C2333;--border:#30363D;--gold:#C9A84C;--gold-light:#E8C97A;--gold-dim:#8B6E2E;--gold-bg:#1A1608;--text:#E6EDF3;--muted:#8B949E;--dim:#484F58;--green:#3FB950;--green-bg:#0D1F11;--red:#F85149;--red-bg:#2D1215;--blue:#58A6FF;--blue-bg:#0D1F33;--purple:#BC8CFF;--purple-bg:#1A0D33}
+:root{--bg:#0D1117;--surface:#161B22;--card:#1C2333;--border:#30363D;--gold:#C9A84C;--gold-light:#E8C97A;--gold-dim:#8B6E2E;--gold-bg:#1A1608;--text:#E6EDF3;--muted:#8B949E;--dim:#484F58;--green:#3FB950;--green-bg:#0D1F11;--red:#F85149;--red-bg:#2D1215;--blue:#58A6FF;--blue-bg:#0D1F33;--purple:#BC8CFF;--purple-bg:#1A0D33;--orange:#D29922;--orange-bg:#2B1D06}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;height:100dvh;overflow:hidden;position:fixed;width:100%}
 body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,sans-serif;font-size:14px}
@@ -23,14 +23,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,sa
 .port-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
 .view{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:0 16px 80px}
 .view::-webkit-scrollbar{display:none}
-.nav{display:none}
-
-
-
-
-
-
-
 .page-header{padding:20px 0 14px}
 .page-eyebrow{color:var(--muted);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px}
 .page-title{color:var(--text);font-size:22px;font-weight:800;letter-spacing:-0.5px}
@@ -78,22 +70,27 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,sa
 .toggle-inactive{background:transparent;color:var(--muted)}
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
+.toast.has-action{pointer-events:auto;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 18px}
+.toast-undo{background:rgba(0,0,0,0.18);border:none;border-radius:14px;color:inherit;font:inherit;font-weight:800;padding:5px 12px;cursor:pointer}
 .empty{text-align:center;padding:48px 20px;color:var(--dim);font-size:14px}
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
 .section-label{color:var(--muted);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;margin-top:4px}
 .chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
 .chart-title{color:var(--text);font-size:13px;font-weight:700;margin-bottom:14px}
+.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.kpi-row .stat-card{min-width:0}
+.dash-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:0 12px}
+.dash-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dash-stat-l{color:var(--muted);font-size:11px}
+.dash-stat-v{color:var(--text);font-size:14px;font-weight:700;margin-top:2px}
+.dash-dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:0}
+.dash-action{display:flex;align-items:center;padding:9px 0;border-top:1px solid var(--border);cursor:pointer}
+.dash-log-btn{background:var(--gold-bg);border:1px solid var(--gold-dim);border-radius:8px;padding:6px 9px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;margin-left:10px;font-family:inherit}
 canvas{max-width:100%}
 .install-banner{background:linear-gradient(135deg,var(--gold-bg),#0D1117);border:1px solid var(--gold-dim);border-radius:12px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
 .install-btn{background:var(--gold);color:#000;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
 .install-close{background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:0 0 0 8px}
-
-.install-banner{background:linear-gradient(135deg,var(--gold-bg),#0D1117);border:1px solid var(--gold-dim);border-radius:12px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
-.install-btn{background:var(--gold);color:#000;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
-.install-close{background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:0 0 0 8px}
-
-
 
 .lock-screen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px}
 .lock-logo{font-size:56px;margin-bottom:16px}
@@ -117,6 +114,63 @@ canvas{max-width:100%}
 .top-nav-btn:not(.active){color:var(--dim)}
 .top-nav-icon{font-size:18px}
 .top-nav-label{font-size:9px;font-weight:700;letter-spacing:0.3px}
+
+/* ── Responsive layout ─────────────────────────────────────────────
+   Phone: portfolio bar, then tabs, then the page (stacked).
+   Fold ≥720px: side rail + wider page, two-column grids, deals list beside the selected deal.
+   Desktop ≥1100px: labelled sidebar, deals as a table, forms slide in from the right. */
+.main{display:contents}
+.port-bar{order:0}.top-nav{order:1}.view{order:2}
+.card-sel{border-color:var(--gold)}
+.wide-grid>*,.card-grid>*{min-width:0}
+.deal-table{width:100%;border-collapse:collapse;font-size:13px}
+.deal-table th{color:var(--muted);font-size:11px;font-weight:600;text-align:left;padding:8px 8px;border-bottom:1px solid var(--border);white-space:nowrap;user-select:none;position:sticky;top:0;background:var(--bg)}
+.deal-table td{padding:9px 8px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+.deal-table .num{text-align:right;white-space:nowrap}
+.deal-table tbody tr{cursor:pointer}
+.deal-table tbody tr:hover{background:var(--surface)}
+.deal-table tbody tr.sel{background:var(--card);box-shadow:inset 3px 0 0 var(--gold)}
+@media (min-width:720px){
+  html,body{position:static}
+  #app{flex-direction:row;max-width:none}
+  .main{display:flex;flex-direction:column;flex:1;min-width:0;height:100%}
+  .top-nav{order:-1;flex-direction:column;width:78px;flex-shrink:0;border-bottom:none;border-right:1px solid var(--border);overflow-y:auto;padding:10px 0;gap:2px}
+  .top-nav-btn{flex:none;min-width:0;border-bottom:none;border-left:3px solid transparent;padding:10px 4px;gap:3px}
+  .top-nav-btn.active{border-left-color:var(--gold);background:var(--gold-bg)}
+  .top-nav-label{font-size:10px}
+  .port-bar{padding:0 20px}
+  .view{padding:0 24px 40px}
+  .view[data-tab="setup"],.view[data-tab="capital"]{padding-left:max(24px,calc((100% - 760px)/2));padding-right:max(24px,calc((100% - 760px)/2))}
+  .view[data-tab="investments"]{padding:0;overflow:hidden}
+  .kpi-row{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .dash-grid{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+  .dash-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .stat-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .wide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px;align-items:start}
+  .chart-wrap canvas{max-height:300px}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:0 12px;align-items:start}
+  .split{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);height:100%}
+  .split-list{overflow-y:auto;padding:0 16px 80px 24px;border-right:1px solid var(--border)}
+  .split-detail{overflow-y:auto;padding:4px 24px 80px}
+  .split-detail .back-btn{display:none}
+  .modal-overlay{align-items:center;justify-content:center}
+  .modal{border-radius:20px;max-width:560px;max-height:86vh;padding:24px}
+  .modal-handle{display:none}
+  .fab{right:28px;bottom:28px}
+  .toast{top:20px}
+}
+@media (min-width:1100px){
+  .top-nav{width:196px;padding:14px 10px;gap:4px}
+  .top-nav-btn{flex-direction:row;justify-content:flex-start;gap:12px;padding:10px 12px;border-left:none;border-radius:10px}
+  .top-nav-btn.active{background:var(--gold-bg)}
+  .top-nav-icon{font-size:16px;width:20px;text-align:center}
+  .top-nav-label{font-size:13px;font-weight:600;letter-spacing:0}
+  .view{padding:0 max(32px,calc((100% - 1320px)/2)) 40px}
+  .split-desk{grid-template-columns:minmax(0,1.5fr) minmax(400px,1fr)}
+  .wide-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .modal-overlay{justify-content:flex-end;align-items:stretch}
+  .modal{margin:0;width:460px;max-width:460px;height:100%;max-height:none;border-radius:0;border-left:1px solid var(--border)}
+}
 </style>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon-32.png" sizes="32x32">
@@ -144,13 +198,14 @@ if('serviceWorker' in navigator){
   </div>
   <button class="lock-btn" onclick="doUnlock()">Unlock</button>
   <div class="lock-error" id="lock-error"></div>
-  <div class="lock-hint">Default password: 1234Abc</div>
+  <div class="lock-hint" id="lock-hint"></div>
 </div>
 <div id="app" style="display:none">
-  <div class="port-bar" id="port-bar"></div>
   <nav class="top-nav" id="top-nav"></nav>
-  <div class="view" id="view"></div>
-  <nav class="nav" id="nav"></nav>
+  <div class="main">
+    <div class="port-bar" id="port-bar"></div>
+    <div class="view" id="view"></div>
+  </div>
 </div>
 <button class="fab" id="fab" style="display:none">+</button>
 <div class="modal-overlay" id="modal" style="display:none"></div>
@@ -160,7 +215,8 @@ const STORE_KEY='saf_v7';
 let state=loadState();
 let currentTab='dashboard',currentPortfolio='wadiaa',detailId=null,detailPortfolio=null;
 let installPrompt=null,showInstallBanner=!localStorage.getItem('saf_installed');
-let invStatusFilter='All',invSourceFilter='All',payFilter='All',rptChartInstances={};
+let invStatusFilter='All',invSourceFilter='All',payFilter='All',rptChartInstances={},dashChartInstances={};
+let _chartTimer=null,_lastRenderedTab=null;
 let invSearch='',invSort='date_desc';
 let anlMonthlyMode='actual';
 let cfExpanded=new Set();
@@ -261,17 +317,182 @@ function defaultState(){return{
 };}
 
 function loadState(){try{const s=localStorage.getItem(STORE_KEY);const parsed=s?JSON.parse(s):defaultState();if(parsed.odRate===undefined)parsed.odRate=4.75;if(parsed.targetRoi===undefined)parsed.targetRoi=15;if(parsed.capitalRowLimit===undefined)parsed.capitalRowLimit=7;if(!parsed.loans)parsed.loans=[];if(!parsed.loanPayments)parsed.loanPayments=[];if(!parsed.equityFlows)parsed.equityFlows=[];if(!parsed.odFlows)parsed.odFlows=[];return parsed;}catch(e){return defaultState();}}
-function saveState(){
-  localStorage.setItem(STORE_KEY,JSON.stringify(state));
+// opts.label — describe a whole-state replacement (import, reset) instead of diffing it
+// opts.snapshot — take a restorable snapshot of the previous data before saving
+// opts.silent — no Undo toast (the caller shows its own message)
+function saveState(opts){
+  opts=opts||{};
+  const prevJSON=_lastSavedJSON;
+  const nextJSON=JSON.stringify(state);
+  if(prevJSON===nextJSON)return;
+  if(opts.snapshot)takeSnapshot(opts.label?'Before: '+opts.label:'Before a bulk change',prevJSON);
+  else maybeDailySnapshot(prevJSON);
+  localStorage.setItem(STORE_KEY,nextJSON);
+  _lastSavedJSON=nextJSON;
   syncConfig.localChangeSeq=(syncConfig.localChangeSeq||0)+1;
   saveSyncConfig(syncConfig);
+  let lines=[];
+  try{lines=opts.label?[opts.label]:describeChanges(JSON.parse(prevJSON),state);}catch(e){}
+  if(!lines.length)lines=['Data updated'];
+  recordHistory(lines);
+  _undoStack.push({json:prevJSON,summary:lines[0]});
+  if(_undoStack.length>UNDO_DEPTH)_undoStack.shift();
+  if(!opts.silent)_pendingUndoToast=lines[0];
 }
+
+// ═══════════════════════════════════════════════════════════════
+// CHANGE HISTORY, UNDO & SNAPSHOTS
+// Every save is diffed against the previous saved copy to produce a human-readable history line,
+// and the previous copy is kept in an in-memory undo stack. Snapshots (full copies, kept on this
+// device) are taken automatically once a day and before any bulk replacement (import, reset,
+// Gist pull, restoring another snapshot), so a bad change can always be rolled back.
+// History and snapshots live in their own keys, so JSON exports and Gist pushes stay unchanged.
+// ═══════════════════════════════════════════════════════════════
+const HISTORY_KEY='ipt_history',SNAPSHOT_KEY='ipt_snapshots';
+const HISTORY_MAX=300,SNAPSHOT_MAX=10,UNDO_DEPTH=20;
+let _lastSavedJSON=JSON.stringify(state);
+let _undoStack=[];
+let _pendingUndoToast=null;
+
+function loadJSONKey(k,fallback){try{const v=JSON.parse(localStorage.getItem(k));return v==null?fallback:v;}catch(e){return fallback;}}
+function storeJSONKey(k,v){
+  try{localStorage.setItem(k,JSON.stringify(v));return true;}
+  catch(e){console.warn('Could not save '+k,e);return false;}
+}
+function loadHistory(){return loadJSONKey(HISTORY_KEY,[]);}
+function recordHistory(lines){
+  const h=loadHistory();
+  h.unshift({ts:new Date().toISOString(),lines});
+  storeJSONKey(HISTORY_KEY,h.slice(0,HISTORY_MAX));
+}
+function loadSnapshots(){return loadJSONKey(SNAPSHOT_KEY,[]);}
+function takeSnapshot(reason,json){
+  const snaps=loadSnapshots();
+  snaps.unshift({id:Date.now().toString(36),ts:new Date().toISOString(),reason,data:json||JSON.stringify(state)});
+  // Oldest snapshots drop off first; if storage is full, keep trimming until it fits
+  let keep=snaps.slice(0,SNAPSHOT_MAX);
+  while(keep.length&&!storeJSONKey(SNAPSHOT_KEY,keep))keep=keep.slice(0,-1);
+}
+function maybeDailySnapshot(prevJSON){
+  const today=new Date().toISOString().slice(0,10);
+  if(!loadSnapshots().some(s=>s.ts.slice(0,10)===today))takeSnapshot('Start of day',prevJSON);
+}
+
+// Turns the difference between two saved states into short history lines
+const FIELD_LABELS={company:'company',deployed:'capital',roi:'rate',duration:'term',fundSource:'fund source',date:'date',status:'status',notes:'notes',commission:'commission',commissionType:'commission type',commissionValue:'commission %',grossCapital:'gross capital',principal:'principal',profit:'profit',amount:'amount',type:'type',name:'name',rate:'rate',termMonths:'term',drawDate:'draw date',color:'colour',owner:'owner',invCode:'code'};
+function fmtVal(v){if(v==null||v==='')return'—';if(typeof v==='number')return Number(v).toLocaleString('en',{maximumFractionDigits:3});return String(v);}
+function fieldChanges(a,b){
+  const keys=new Set([...Object.keys(a),...Object.keys(b)]);
+  const out=[];
+  keys.forEach(k=>{
+    if(k==='id'||k==='investmentId'||k==='loanId')return;
+    if(JSON.stringify(a[k])!==JSON.stringify(b[k])&&!(a[k]==null&&b[k]==null))out.push((FIELD_LABELS[k]||k)+' '+fmtVal(a[k])+' → '+fmtVal(b[k]));
+  });
+  return out;
+}
+function diffList(before,after,name,label,lines){
+  const bm=new Map((before||[]).map(x=>[String(x.id),x])),am=new Map((after||[]).map(x=>[String(x.id),x]));
+  am.forEach((x,id)=>{
+    const old=bm.get(id);
+    if(!old)lines.push('Added '+name+': '+label(x));
+    else{const ch=fieldChanges(old,x);if(ch.length)lines.push('Edited '+name+' '+label(x)+': '+ch.join(', '));}
+  });
+  bm.forEach((x,id)=>{if(!am.has(id))lines.push('Deleted '+name+': '+label(x));});
+}
+function describeChanges(prev,next){
+  const lines=[];
+  diffList(prev.portfolios,next.portfolios,'portfolio',p=>p.name,lines);
+  const pids=new Set([...(prev.portfolios||[]).map(p=>p.id),...(next.portfolios||[]).map(p=>p.id)]);
+  pids.forEach(pid=>{
+    const a=prev[pid]||{},b=next[pid]||{};
+    diffList(a.investments,b.investments,'deal',i=>i.company,lines);
+    diffList(a.payments,b.payments,'payment',p=>fmtVal(Number(p.principal||0)+Number(p.profit||0))+' · '+p.company+' · '+fmtDate(p.date),lines);
+  });
+  diffList(prev.equityFlows,next.equityFlows,'equity movement',f=>f.type+' '+fmtVal(Number(f.amount))+' · '+fmtDate(f.date),lines);
+  diffList(prev.odFlows,next.odFlows,'OD movement',f=>f.type+' '+fmtVal(Number(f.amount))+' · '+fmtDate(f.date),lines);
+  diffList(prev.loans,next.loans,'loan',l=>l.name,lines);
+  diffList(prev.loanPayments,next.loanPayments,'loan payment',p=>fmtVal(Number(p.amount))+' · '+fmtDate(p.date),lines);
+  [['odRate','OD rate'],['targetRoi','target ROI'],['capitalRowLimit','rows shown']].forEach(([k,l])=>{
+    if(prev[k]!==next[k])lines.push('Changed '+l+': '+fmtVal(prev[k])+' → '+fmtVal(next[k]));
+  });
+  return lines;
+}
+
+// Replaces in-memory state from a JSON string and fills in fields older backups may lack
+function adoptState(json){
+  const parsed=JSON.parse(json);
+  if(parsed.odRate===undefined)parsed.odRate=4.75;
+  if(parsed.targetRoi===undefined)parsed.targetRoi=15;
+  if(parsed.capitalRowLimit===undefined)parsed.capitalRowLimit=7;
+  ['loans','loanPayments','equityFlows','odFlows'].forEach(k=>{if(!parsed[k])parsed[k]=[];});
+  state=parsed;
+  if(!state.portfolios.some(p=>p.id===currentPortfolio)&&currentPortfolio!=='all')currentPortfolio=state.portfolios[0]?.id||'all';
+  if(detailId!=null&&!(pData(detailPortfolio).investments||[]).some(i=>i.id===detailId)){detailId=null;if(currentTab==='detail')currentTab='investments';}
+}
+function undoLast(){
+  const u=_undoStack.pop();
+  if(!u){showToast('Nothing to undo',true);return;}
+  const currentJSON=JSON.stringify(state);
+  adoptState(u.json);
+  localStorage.setItem(STORE_KEY,u.json);
+  _lastSavedJSON=u.json;
+  syncConfig.localChangeSeq=(syncConfig.localChangeSeq||0)+1;
+  saveSyncConfig(syncConfig);
+  let lines=[];
+  try{lines=describeChanges(JSON.parse(currentJSON),state);}catch(e){}
+  recordHistory(['Undid: '+u.summary].concat(lines.slice(0,5)));
+  _pendingUndoToast=null;
+  closeModal();render();showToast('Undone: '+u.summary);
+}
+function restoreSnapshot(id){
+  const s=loadSnapshots().find(x=>x.id===id);
+  if(!s)return;
+  if(!confirm('Restore the snapshot from '+fmtDate(s.ts)+' '+new Date(s.ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'? Your current data is snapshotted first, so this can be reversed.'))return;
+  try{adoptState(s.data);}catch(e){showToast('That snapshot is unreadable',true);return;}
+  saveState({label:'Restored snapshot from '+fmtDate(s.ts)+' ('+s.reason+')',snapshot:true,silent:true});
+  render();showToast('Snapshot restored ✓');
+}
+function snapshotNow(){takeSnapshot('Manual snapshot');render();showToast('Snapshot saved ✓');}
+function clearHistory(){
+  if(!confirm('Clear the change history on this device? Your data and snapshots are not affected.'))return;
+  storeJSONKey(HISTORY_KEY,[]);render();showToast('History cleared');
+}
+function fmtStamp(ts){const d=new Date(ts);return fmtDate(d)+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+function historySectionHTML(){
+  const h=loadHistory(),snaps=loadSnapshots();
+  const histRows=h.map(e=>'<div style="padding:8px 0;border-top:1px solid var(--border)">'
+    +'<div style="color:var(--muted);font-size:11px">'+fmtStamp(e.ts)+'</div>'
+    +e.lines.slice(0,4).map(l=>'<div style="color:var(--text);font-size:12px;line-height:1.5;word-break:break-word">'+escHTML(l)+'</div>').join('')
+    +(e.lines.length>4?'<div style="color:var(--dim);font-size:11px">+ '+(e.lines.length-4)+' more changes</div>':'')
+    +'</div>');
+  const snapRows=snaps.map(s=>'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border)">'
+    +'<div><div style="color:var(--text);font-size:12px;font-weight:600">'+escHTML(s.reason)+'</div><div style="color:var(--muted);font-size:11px">'+fmtStamp(s.ts)+'</div></div>'
+    +'<button onclick="restoreSnapshot(\''+s.id+'\')" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--gold);font-size:11px;cursor:pointer;flex-shrink:0">Restore</button></div>');
+  return'<div class="section-label">History and Snapshots</div>'
+    +'<div class="card" style="margin-bottom:10px">'
+    +'<div style="color:var(--text);font-size:14px;font-weight:700;margin-bottom:4px">Undo</div>'
+    +'<div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:12px">'+(_undoStack.length?'Last change: '+escHTML(_undoStack[_undoStack.length-1].summary):'No changes to undo in this session.')+'</div>'
+    +'<button class="btn btn-ghost" style="margin:0" onclick="undoLast()">↶ Undo Last Change</button></div>'
+    +'<div class="card" style="margin-bottom:10px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="color:var(--text);font-size:14px;font-weight:700">Snapshots</div>'
+    +'<button onclick="snapshotNow()" style="background:var(--gold-bg);border:1px solid var(--gold-dim);border-radius:6px;padding:5px 10px;color:var(--gold);font-size:11px;cursor:pointer">+ Snapshot Now</button></div>'
+    +'<div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:6px">Full copies kept on this device — one per day automatically, and before every import, reset, Gist pull or restore. The last '+SNAPSHOT_MAX+' are kept.</div>'
+    +(snapRows.length?snapRows.join(''):'<div style="color:var(--muted);font-size:12px;padding:8px 0">No snapshots yet — one is taken with your first change today.</div>')
+    +'</div>'
+    +'<div class="card" style="margin-bottom:10px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="color:var(--text);font-size:14px;font-weight:700">Change History</div>'
+    +(h.length?'<button onclick="clearHistory()" style="background:transparent;border:none;color:var(--dim);font-size:11px;cursor:pointer">Clear</button>':'')+'</div>'
+    +(histRows.length?limitedListHTML(histRows,'history'):'<div style="color:var(--muted);font-size:12px;padding:8px 0">Changes you make will be listed here.</div>')
+    +'</div>';
+}
+function escHTML(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 // ═══════════════════════════════════════════════════════════════
 // GITHUB GIST SYNC — manual, whole-state push/pull (no auto-merge).
 // Credentials and sync bookkeeping are kept in a SEPARATE localStorage key from the app's own
 // state, so (a) "Export to JSON" never leaks the token, and (b) the Gist payload itself never
-// contains the token used to access it. The Gist you connect to should be a SECRET Gist
+// contains the token used to access it. The token is stored AES-GCM-encrypted under a key derived
+// from the app password (see PASSWORD / LOCK ENGINE). The Gist you connect to should be a SECRET Gist
 // (gist.github.com → Create secret gist) — "secret" means unlisted, not access-controlled: treat
 // the Gist ID + URL as sensitive, since anyone with the exact link could read your data.
 // ═══════════════════════════════════════════════════════════════
@@ -285,7 +506,8 @@ function loadSyncConfig(){
     if(cfg&&typeof cfg==='object'){
       return{
         gistId:typeof cfg.gistId==='string'?cfg.gistId:'',
-        token:typeof cfg.token==='string'?cfg.token:'',
+        token:typeof cfg.token==='string'?cfg.token:'', // legacy plaintext; encrypted on next unlock
+        tokenEnc:cfg.tokenEnc&&cfg.tokenEnc.iv&&cfg.tokenEnc.ct?cfg.tokenEnc:null,
         filename:typeof cfg.filename==='string'&&cfg.filename?cfg.filename:'investment-portfolio-tracker-state.json',
         lastSyncedAt:typeof cfg.lastSyncedAt==='string'?cfg.lastSyncedAt:null,
         lastSyncedRemoteUpdatedAt:typeof cfg.lastSyncedRemoteUpdatedAt==='string'?cfg.lastSyncedRemoteUpdatedAt:null,
@@ -294,9 +516,17 @@ function loadSyncConfig(){
       };
     }
   }catch(e){}
-  return{gistId:'',token:'',filename:'investment-portfolio-tracker-state.json',lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:0,syncedSeq:0};
+  return{gistId:'',token:'',tokenEnc:null,filename:'investment-portfolio-tracker-state.json',lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:0,syncedSeq:0};
 }
-function saveSyncConfig(cfg){try{localStorage.setItem(SYNC_CONFIG_KEY,JSON.stringify(cfg));}catch(e){}}
+// The decrypted token only ever lives in memory. A plaintext token is written back only while no
+// encrypted copy exists yet (legacy config awaiting migration, or no WebCrypto), so it's never lost.
+function saveSyncConfig(cfg){
+  try{
+    const out=Object.assign({},cfg);
+    if(out.tokenEnc)delete out.token;
+    localStorage.setItem(SYNC_CONFIG_KEY,JSON.stringify(out));
+  }catch(e){}
+}
 let syncConfig=loadSyncConfig();
 
 function isSyncConnected(){return!!(syncConfig.gistId&&syncConfig.token);}
@@ -341,18 +571,19 @@ async function pushToGist(gistId,token,filename,jsonText){
   const gist=await res.json();
   return{updatedAt:gist.updated_at};
 }
-function connectSync(){
+async function connectSync(){
   const gistId=document.getElementById('sync-gist-id').value.trim();
   const token=document.getElementById('sync-token').value.trim();
   if(!gistId||!token){showToast('Enter both the Gist ID and your access token',true);return;}
-  syncConfig={gistId,token,filename:syncConfig.filename||'investment-portfolio-tracker-state.json',lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:syncConfig.localChangeSeq||1,syncedSeq:0};
+  const tokenEnc=_sessionKey?await encryptSecret(token):null;
+  syncConfig={gistId,token,tokenEnc,filename:syncConfig.filename||'investment-portfolio-tracker-state.json',lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:syncConfig.localChangeSeq||1,syncedSeq:0};
   saveSyncConfig(syncConfig);
   render();
   showToast('Connected — push or pull to sync ✓');
 }
 function disconnectSync(){
   if(!confirm('Disconnect from the Gist? Your local data is unaffected — this only forgets the connection on this device.'))return;
-  syncConfig={gistId:'',token:'',filename:syncConfig.filename,lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:syncConfig.localChangeSeq,syncedSeq:0};
+  syncConfig={gistId:'',token:'',tokenEnc:null,filename:syncConfig.filename,lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:syncConfig.localChangeSeq,syncedSeq:0};
   saveSyncConfig(syncConfig);
   render();
   showToast('Disconnected');
@@ -379,7 +610,7 @@ async function syncPushNow(){
 async function syncPullNow(){
   const cfg=syncConfig;
   if(!isSyncConnected()){showToast('Connect to a Gist first',true);return;}
-  if(!confirm('This replaces ALL data on this device with what\'s saved in the Gist. Anything entered here since your last sync will be lost unless you push first. Continue?'))return;
+  if(!confirm('This replaces ALL data on this device with what\'s saved in the Gist. Anything entered here since your last sync is replaced too — a snapshot of it is kept in Setup → Snapshots. Continue?'))return;
   const btn=document.getElementById('sync-pull-btn');
   if(btn){btn.disabled=true;btn.textContent='Pulling…';}
   try{
@@ -388,15 +619,17 @@ async function syncPullNow(){
     if(!remote.content||!remote.content.trim()){showToast('Gist is empty — push from here first',true);render();return;}
     const parsed=JSON.parse(remote.content);
     if(!parsed||!parsed.portfolios){showToast('Gist content is not a valid backup',true);render();return;}
-    state=parsed;
-    if(state.odRate===undefined)state.odRate=4.75;
-    if(state.targetRoi===undefined)state.targetRoi=15;
-    if(state.capitalRowLimit===undefined)state.capitalRowLimit=7;
-    if(!state.loans)state.loans=[];
-    if(!state.loanPayments)state.loanPayments=[];
-    if(!state.equityFlows)state.equityFlows=[];
-    if(!state.odFlows)state.odFlows=[];
-    localStorage.setItem(STORE_KEY,JSON.stringify(state));
+    const prevJSON=_lastSavedJSON;
+    adoptState(remote.content);
+    const pulledJSON=JSON.stringify(state);
+    if(pulledJSON!==prevJSON){
+      takeSnapshot('Before Gist pull',prevJSON);
+      _undoStack.push({json:prevJSON,summary:'Gist pull'});
+      let lines=[];try{lines=describeChanges(JSON.parse(prevJSON),state).slice(0,20);}catch(e){}
+      recordHistory(['Pulled data from the Gist'].concat(lines));
+    }
+    localStorage.setItem(STORE_KEY,pulledJSON);
+    _lastSavedJSON=pulledJSON;
     cfg.syncedSeq=cfg.localChangeSeq; // pulling also counts as "caught up"
     cfg.lastSyncedAt=new Date().toISOString();
     cfg.lastSyncedRemoteUpdatedAt=remote.updatedAt;
@@ -484,18 +717,11 @@ function paymentStatusBadge(pid,inv){
 function fmtDuration(m){if(!m)return'—';m=Number(m);if(m<12)return m+'m';const y=Math.floor(m/12),r=m%12;return y+'yr'+(r?' '+r+'m':'');}
 function expectedRoi(inv){return Number(inv.roi)*Number(inv.duration||0)/12;}
 function expectedProfit(inv){return Number(inv.deployed)*expectedRoi(inv)/100;}
-// OD Facility financing cost — deducted from gross profit to show the true net return
-// OD financing cost is now tracked once, correctly, at the pool level (Capital tab — Utilized
-// Balance × OD rate). It is deliberately NOT subtracted here anymore: under the Free Capital pool
-// model, deals draw from one shared cash pool, so there's no honest way to say a specific deal
-// "is" OD-funded. Charging OD cost per-deal on top of the pool-level charge would double-count it.
-function odFinancingCost(inv){
-  if(inv.fundSource!=='OD Facility')return 0;
-  return Number(inv.deployed)*Number(state.odRate||0)/100*Number(inv.duration||0)/12;
-}
+// OD financing cost is tracked once, at the pool level (Capital tab — Utilized Balance × OD rate),
+// never per deal: deals draw from one shared cash pool, so no single deal "is" OD-funded, and a
+// per-deal charge on top of the pool-level one would double-count it.
 // COMMISSION — three ways it can be charged:
 //  'cash'         upfront flat fee, paid separately, does not touch deployed capital or returns
-//  'pct_invested' agent deducts a % of the gross capital handed over before investing the rest
 //  'pct_invested' commission is a % of the NET invested amount (what you enter as Capital),
 //                 added on top — inv.grossCapital stores the resulting total handed over
 //                 (net + commission), computed automatically, never entered directly
@@ -783,10 +1009,14 @@ function render(){
   const selEnd=active&&typeof active.selectionEnd==='number'?active.selectionEnd:null;
   const viewEl=document.getElementById('view');
   const scrollTop=viewEl?viewEl.scrollTop:0;
+  const listEl=document.querySelector('.split-list'),detEl=document.querySelector('.split-detail');
+  const listScroll=listEl?listEl.scrollTop:0,detScroll=detEl?detEl.scrollTop:0,detKey=detailPortfolio+'|'+detailId;
   Object.values(rptChartInstances).forEach(c=>{try{c.destroy()}catch(e){}});
   rptChartInstances={};
   Object.values(anlChartInstances).forEach(c=>{try{c.destroy()}catch(e){}});
   anlChartInstances={};
+  Object.values(dashChartInstances).forEach(c=>{try{c.destroy()}catch(e){}});
+  dashChartInstances={};
   renderPortBar();renderTopNav();renderView();renderFab();
   if(activeId){
     const el=document.getElementById(activeId);
@@ -795,9 +1025,29 @@ function render(){
       if(selStart!=null&&el.setSelectionRange){try{el.setSelectionRange(selStart,selEnd);}catch(e){}}
     }
   }
+  // Keep the scroll position when re-rendering the same page; start at the top of a new one
   const newViewEl=document.getElementById('view');
-  if(newViewEl)newViewEl.scrollTop=scrollTop;
+  if(newViewEl&&currentTab===_lastRenderedTab)newViewEl.scrollTop=scrollTop;
+  _lastRenderedTab=currentTab;
+  const nl=document.querySelector('.split-list'),nd=document.querySelector('.split-detail');
+  if(nl&&listEl)nl.scrollTop=listScroll;
+  if(nd&&detEl&&detKey===detailPortfolio+'|'+detailId)nd.scrollTop=detScroll;
 }
+
+// RESPONSIVE LAYOUT — the same screens re-arrange by width: phone (stacked, top tabs),
+// fold (≥720px: side rail, two-column pages, deals list beside the selected deal) and
+// desktop (≥1100px: labelled sidebar, deals as a sortable table, forms in a side panel).
+// CSS handles most of it; layoutMode() covers the few places where the markup itself differs.
+const MQ_FOLD=window.matchMedia('(min-width:720px)'),MQ_DESK=window.matchMedia('(min-width:1100px)');
+function layoutMode(){return MQ_DESK.matches?'desktop':MQ_FOLD.matches?'fold':'phone';}
+let _layoutMode=layoutMode();
+function onLayoutChange(){
+  const m=layoutMode();
+  if(m===_layoutMode)return;
+  _layoutMode=m;
+  if(_unlocked)render();
+}
+[MQ_FOLD,MQ_DESK].forEach(mq=>mq.addEventListener?mq.addEventListener('change',onLayoutChange):mq.addListener(onLayoutChange));
 function renderPortBar(){
   const ports=[...state.portfolios,{id:'all',name:'All Portfolios',color:'#58A6FF'}];
   document.getElementById('port-bar').innerHTML=ports.map(p=>`<button class="port-btn ${currentPortfolio===p.id?'active':''}" style="${currentPortfolio===p.id?`color:${p.color};border-bottom-color:${p.color}`:''}" onclick="switchPortfolio('${p.id}')">${p.name}</button>`).join('')+`<button class="port-btn" style="color:var(--dim);font-size:16px;padding:8px 10px" onclick="openAddPortfolio()" title="Add portfolio">＋</button>`;
@@ -820,11 +1070,6 @@ function renderTopNav(){
       <span class="top-nav-label">${t.label}</span>
     </button>`).join('');
 }
-
-function renderNav(){
-  const tabs=[{id:'dashboard',icon:'◈',label:'Dashboard'},{id:'investments',icon:'⬡',label:'Deals'},{id:'payments',icon:'↕',label:'Payments'},{id:'reports',icon:'▤',label:'Reports'},{id:'setup',icon:'⚙',label:'Setup'}];
-  document.getElementById('nav').innerHTML=tabs.map(t=>`<button class="nav-btn ${currentTab===t.id||(currentTab==='detail'&&t.id==='investments')?'active':''}" onclick="setTab('${t.id}')"><span class="nav-icon">${t.icon}</span><span class="nav-label">${t.label}</span><div class="nav-dot"></div></button>`).join('');
-}
 function renderFab(){
   const fab=document.getElementById('fab');
   if(['detail','reports','analytics','setup'].includes(currentTab)){fab.style.display='none';return;}
@@ -833,84 +1078,164 @@ function renderFab(){
 }
 function renderView(){
   const v=document.getElementById('view');
+  if(currentTab==='detail'&&layoutMode()!=='phone')currentTab='investments'; // detail lives in the split pane
+  v.dataset.tab=currentTab;
+  // Charts are drawn just after the HTML lands. Only the latest render's init may run — two quick
+  // renders used to both fire and collide on the same canvas ("Canvas is already in use").
+  clearTimeout(_chartTimer);
+  const chartInit=currentTab==='dashboard'?initDashboardCharts:currentTab==='analytics'?initAnalyticsCharts:currentTab==='reports'?initReportCharts:null;
+  if(chartInit)_chartTimer=setTimeout(chartInit,60);
   if(currentTab==='dashboard') v.innerHTML=dashboardHTML();
   else if(currentTab==='investments') v.innerHTML=investmentsHTML();
   else if(currentTab==='detail') v.innerHTML=detailHTML();
   else if(currentTab==='payments') v.innerHTML=paymentsHTML();
-  else if(currentTab==='analytics'){v.innerHTML=analyticsHTML();setTimeout(initAnalyticsCharts,100);}
-  else if(currentTab==='reports'){v.innerHTML=reportsHTML();setTimeout(initReportCharts,100);}
+  else if(currentTab==='analytics') v.innerHTML=analyticsHTML();
+  else if(currentTab==='reports') v.innerHTML=reportsHTML();
   else if(currentTab==='capital') v.innerHTML=capitalHTML();
   else if(currentTab==='setup') v.innerHTML=setupHTML();
   v.scrollTop=0;
 }
 
-// DASHBOARD
+// DASHBOARD — attention first: what's working, what's due, what's late, then the detail.
+// Scope is the selected portfolio, or every portfolio in the "All" view.
+const QUIET_DAYS=90; // an active deal with no receipt for this long is worth a follow-up
+function dashScope(){
+  const ports=currentPortfolio==='all'?state.portfolios:state.portfolios.filter(p=>p.id===currentPortfolio);
+  const invs=ports.flatMap(p=>pData(p.id).investments.map(i=>({...i,_pid:p.id,_pname:p.name,_pcolor:p.color})));
+  const pays=ports.flatMap(p=>pData(p.id).payments);
+  return{ports,invs,pays};
+}
+function lastReceiptDate(pid,inv){
+  const ds=invPaymentsFor(pid,inv.id).filter(p=>Number(p.principal||0)+Number(p.profit||0)>0).map(p=>new Date(p.date));
+  return ds.length?new Date(Math.max(...ds)):null;
+}
+// Deals needing a follow-up: past maturity with money outstanding, maturing within 30 days,
+// or active but silent (no receipt) for QUIET_DAYS or more.
+function dashActionItems(invs){
+  const now=new Date();
+  const col=collectionsList(invs);
+  const seen=new Set();
+  const items=[];
+  col.overdue.forEach(i=>{seen.add(i._pid+'|'+i.id);items.push({inv:i,amt:i._out,rank:0,days:-i._days,color:'var(--red)',reason:Math.abs(i._days)+' days past maturity'});});
+  col.upcoming.forEach(i=>{seen.add(i._pid+'|'+i.id);items.push({inv:i,amt:i._out,rank:1,days:i._days,color:'var(--gold)',reason:i._days===0?'Matures today':'Matures in '+i._days+' day'+(i._days!==1?'s':'')});});
+  invs.forEach(i=>{
+    if(seen.has(i._pid+'|'+i.id)||effectiveStatus(i._pid,i)!=='Active')return;
+    const start=new Date(i.date);if(start>now)return;
+    const last=lastReceiptDate(i._pid,i)||start;
+    const days=Math.floor((now-last)/86400000);
+    if(days<QUIET_DAYS)return;
+    items.push({inv:i,amt:outstandingFor(i._pid,i),rank:2,days,color:'var(--orange)',reason:(lastReceiptDate(i._pid,i)?'No payment for ':'Nothing received in ')+days+' days'});
+  });
+  items.sort((a,b)=>a.rank-b.rank||(a.rank===1?a.days-b.days:b.days-a.days));
+  return items;
+}
+function dashActionsHTML(items,showPortfolio){
+  if(!items.length)return'<div class="empty" style="padding:24px 12px">Nothing needs attention right now ✓</div>';
+  const open=cfExpanded.has('dash-actions'),LIMIT=6;
+  const shown=open?items:items.slice(0,LIMIT);
+  return shown.map(it=>{const i=it.inv;return'<div class="dash-action" onclick="openDetail('+i.id+',\''+i._pid+'\')">'
+    +'<div style="min-width:0;flex:1"><div style="color:var(--text);font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escHTML(i.company)+'</div>'
+    +'<div style="font-size:11px;margin-top:2px"><span style="color:'+it.color+';font-weight:600">'+it.reason+'</span>'+(showPortfolio?'<span style="color:var(--muted)"> · '+escHTML(i._pname)+'</span>':'')+'</div></div>'
+    +'<div style="text-align:right;flex-shrink:0;margin-left:8px"><div style="color:var(--gold-light);font-size:13px;font-weight:700">'+fmt(it.amt)+'</div><div style="color:var(--muted);font-size:10px">outstanding</div></div>'
+    +'<button class="dash-log-btn" onclick="event.stopPropagation();openAddPaymentForDeal('+i.id+',\''+i._pid+'\')">+ Log</button>'
+    +'</div>';}).join('')
+    +(items.length>LIMIT?'<button onclick="toggleCashFlowBucket(\'dash-actions\')" style="width:100%;background:transparent;border:none;border-top:1px solid var(--border);color:var(--gold);font-size:12px;font-weight:600;padding:10px 0;cursor:pointer">'+(open?'Show Less':'Show '+(items.length-LIMIT)+' More')+'</button>':'');
+}
+function kpiTile(label,value,sub,color,tone){
+  const toneStyle=tone==='danger'?'background:var(--red-bg);border-color:var(--red)':'';
+  return'<div class="stat-card" style="'+toneStyle+'"><div style="color:'+(tone==='danger'?'var(--red)':'var(--muted)')+';font-size:11px;font-weight:600">'+label+'</div>'
+    +'<div style="color:'+color+';font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-top:4px">'+value+'</div>'
+    +'<div style="color:var(--muted);font-size:11px;margin-top:2px">'+sub+'</div></div>';
+}
 function dashboardHTML(){
   const isAll=currentPortfolio==='all';
   const banner=showInstallBanner?`<div class="install-banner"><div style="font-size:22px">📲</div><div style="flex:1"><div style="color:var(--gold);font-size:13px;font-weight:700">Install on your phone</div><div style="color:var(--muted);font-size:11px;margin-top:2px">Add to home screen for offline access</div></div><button class="install-btn" onclick="triggerInstall()">Install</button><button class="install-close" onclick="dismissInstall()">×</button></div>`:'';
-  if(isAll) return dashboardAllHTML(banner);
-  const pid=currentPortfolio,pinfo=pInfo(pid),pd=pData(pid);
-  const t=totalsFor(pd.investments,pd.payments,pid);
-  const pss=payStatusSummaryFor(pid,pd.investments);
-  const psC={'No Payment':'var(--dim)','Partial Payment':'var(--blue)','Full Payment':'var(--green)'};
-  const psB={'No Payment':'var(--border)','Partial Payment':'var(--blue)','Full Payment':'var(--green)'};
-  const psBg={'No Payment':'var(--card)','Partial Payment':'var(--blue-bg)','Full Payment':'var(--green-bg)'};
-  const recent=[...pd.payments].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
-  return`<div class="page-header"><div class="page-eyebrow" style="color:${pinfo.color}">${pinfo.name}</div><div class="page-title">Salim Al-Aufi</div><div class="page-sub">${new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'})} · ${t.active} active deal${t.active!==1?'s':''}</div></div>
-  ${banner}
-  <div class="card-hero" style="border-color:${pinfo.color}33">
-    <div style="color:${pinfo.color};font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Total Capital Deployed (OMR)</div>
-    <div style="color:var(--gold-light);font-size:32px;font-weight:800;letter-spacing:-1px">${fmt(t.deployed)}</div>
-    <div style="display:flex;gap:18px;margin-top:14px;flex-wrap:wrap">
-      <div><div style="color:var(--muted);font-size:11px">Expected Profit</div><div style="color:var(--green);font-size:16px;font-weight:700">${fmt(t.expProfit)}</div></div>
-      <div><div style="color:var(--muted);font-size:11px">Act. Profit</div><div style="color:var(--blue);font-size:16px;font-weight:700">${fmt(t.actProfit)}</div></div>
-      <div><div style="color:var(--muted);font-size:11px">Total Repaid</div><div style="color:var(--blue);font-size:16px;font-weight:700">${fmt(t.repaid)}</div></div>
-      <div><div style="color:var(--muted);font-size:11px">Avg Exp ROI</div><div style="color:${pinfo.color};font-size:16px;font-weight:700">${t.avgExpRoi.toFixed(1)}%</div></div>
-      <div><div style="color:var(--muted);font-size:11px">Avg Act ROI</div><div style="color:var(--blue);font-size:16px;font-weight:700">${t.avgActRoi.toFixed(1)}%</div></div>
-      ${t.hasCommissionAdj?'<div><div style="color:var(--muted);font-size:11px">Net Profit (after Profit Commission)</div><div style="color:var(--green);font-size:16px;font-weight:700">'+fmt(t.netExpProfit)+'</div></div>':''}
-    </div>
-  </div>
-  <div class="stat-grid">
-    <div class="stat-card"><div style="font-size:22px;font-weight:800;color:var(--gold)">${t.active}</div><div style="font-size:12px;font-weight:600">Active</div><div style="font-size:11px;color:var(--muted)">deals</div></div>
-    <div class="stat-card"><div style="font-size:22px;font-weight:800;color:var(--muted)">${t.total-t.active}</div><div style="font-size:12px;font-weight:600">Closed</div><div style="font-size:11px;color:var(--muted)">deals</div></div>
-    <div class="stat-card"><div style="font-size:22px;font-weight:800;color:var(--green)">${pd.investments.filter(i=>i.fundSource==='Cash').length}</div><div style="font-size:12px;font-weight:600">Cash</div><div style="font-size:11px;color:var(--muted)">fund source</div></div>
-    <div class="stat-card"><div style="font-size:22px;font-weight:800;color:var(--purple)">${pd.investments.filter(i=>i.fundSource==='Loan').length}</div><div style="font-size:12px;font-weight:600">Loan</div><div style="font-size:11px;color:var(--muted)">fund source</div></div>
-    <div class="stat-card"><div style="font-size:22px;font-weight:800;color:var(--blue)">${pd.investments.filter(i=>i.fundSource==='OD Facility').length}</div><div style="font-size:12px;font-weight:600">OD Facility</div><div style="font-size:11px;color:var(--muted)">fund source</div></div>
-  </div>
-  <div class="section-label">Payment Status Summary</div>
-  ${pss.map(ps=>`<div style="background:${psBg[ps.label]};border:1px solid ${psB[ps.label]};border-radius:14px;padding:14px 16px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="color:${psC[ps.label]};font-size:13px;font-weight:700">${ps.label}</div><div style="color:${psC[ps.label]};font-size:22px;font-weight:800">${ps.count}</div></div><div style="display:flex;justify-content:space-between"><div><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px">Outstanding</div><div style="color:var(--text);font-size:13px;font-weight:600;margin-top:2px">${fmt(ps.totalOutstanding)}</div></div><div style="text-align:right"><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px">Received</div><div style="color:var(--text);font-size:13px;font-weight:600;margin-top:2px">${fmt(ps.totalReceived)}</div></div></div></div>`).join('')}
-  <div class="section-label" style="margin-top:6px">Recent Payments</div>
-  ${recent.length===0?'<div class="empty">No payments yet</div>':recent.map(p=>'<div class="row">'+'<div><div style="color:var(--text);font-size:13px;font-weight:600">'+p.company+'</div>'+'<div style="color:var(--muted);font-size:11px;margin-top:2px">'+fmtDate(p.date)+'</div></div>'+'<div style="text-align:right">'+(Number(p.principal||0)>0?'<div style="color:var(--blue);font-size:13px;font-weight:700">P: '+fmt(p.principal)+'</div>':'')+(Number(p.profit||0)>0?'<div style="color:var(--green);font-size:13px;font-weight:700">R: '+fmt(p.profit)+'</div>':'')+'</div></div>').join('')}`;
-}
+  const{ports,invs,pays}=dashScope();
+  const now=new Date(),year=now.getFullYear();
+  const pinfo=isAll?{name:'All Portfolios',color:'var(--blue)'}:pInfo(currentPortfolio);
+  const active=invs.filter(i=>effectiveStatus(i._pid,i)==='Active');
+  const working=active.filter(i=>new Date(i.date)<=now);
+  const capitalNow=working.reduce((s,i)=>s+principalOutstanding(i._pid,i),0);
+  const col=collectionsList(invs);
+  const overdueAmt=col.overdue.reduce((s,i)=>s+i._out,0);
+  const dueSoonAmt=col.upcoming.reduce((s,i)=>s+i._out,0);
+  const ytd=pays.filter(p=>new Date(p.date).getFullYear()===year).reduce((s,p)=>s+Number(p.principal||0)+Number(p.profit||0),0);
+  const lifetime=invs.reduce((s,i)=>s+Number(i.deployed),0);
+  const activeDeployed=active.reduce((s,i)=>s+Number(i.deployed),0);
+  const avgRate=activeDeployed?active.reduce((s,i)=>s+Number(i.roi)*Number(i.deployed),0)/activeDeployed:0;
+  const expProfitActive=active.reduce((s,i)=>s+expectedProfit(i),0);
+  const actions=dashActionItems(invs);
+  const pss=['No Payment','Partial Payment','Full Payment'].map(label=>{
+    const g=invs.filter(i=>paymentStatus(i._pid,i)===label);
+    return{label,count:g.length,out:g.reduce((s,i)=>s+outstandingFor(i._pid,i),0)};
+  });
+  const psColor={'No Payment':'#484F58','Partial Payment':'#58A6FF','Full Payment':'#3FB950'};
+  const total=Math.max(1,invs.length);
+  const recent=[...pays].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  const upcomingStarts=invs.filter(i=>new Date(i.date)>now).length;
 
-function dashboardAllHTML(banner){
-  const ports=state.portfolios;
-  const allInv=ports.flatMap(p=>pData(p.id).investments.map(i=>({...i,_pid:p.id})));
-  const allPay=ports.flatMap(p=>pData(p.id).payments);
-  const t=totalsFor(allInv,allPay);
-  const psAll={'No Payment':{count:0,outstanding:0,received:0},'Partial Payment':{count:0,outstanding:0,received:0},'Full Payment':{count:0,outstanding:0,received:0}};
-  ports.forEach(p=>{pData(p.id).investments.forEach(inv=>{const s=paymentStatus(p.id,inv);psAll[s].count++;psAll[s].outstanding+=outstandingFor(p.id,inv);psAll[s].received+=invPaymentsFor(p.id,inv.id).reduce((ss,pay)=>ss+Number(pay.principal||0)+Number(pay.profit||0),0);});});
-  const psC={'No Payment':'var(--dim)','Partial Payment':'var(--blue)','Full Payment':'var(--green)'};
-  const psB={'No Payment':'var(--border)','Partial Payment':'var(--blue)','Full Payment':'var(--green)'};
-  const psBg={'No Payment':'var(--card)','Partial Payment':'var(--blue-bg)','Full Payment':'var(--green-bg)'};
-  return`<div class="page-header"><div class="page-eyebrow" style="color:var(--blue)">All Portfolios</div><div class="page-title">Salim Al-Aufi</div><div class="page-sub">${new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'})} · Combined view</div></div>
-  ${banner}
-  <div class="card-hero" style="border-color:var(--blue)33">
-    <div style="color:var(--blue);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Total Capital — All Portfolios (OMR)</div>
-    <div style="color:var(--gold-light);font-size:32px;font-weight:800;letter-spacing:-1px">${fmt(t.deployed)}</div>
-    <div style="display:flex;gap:18px;margin-top:14px;flex-wrap:wrap">
-      <div><div style="color:var(--muted);font-size:11px">Expected Profit</div><div style="color:var(--green);font-size:16px;font-weight:700">${fmt(t.expProfit)}</div></div>
-      <div><div style="color:var(--muted);font-size:11px">Act. Profit</div><div style="color:var(--blue);font-size:16px;font-weight:700">${fmt(t.actProfit)}</div></div>
-      <div><div style="color:var(--muted);font-size:11px">Total Repaid</div><div style="color:var(--blue);font-size:16px;font-weight:700">${fmt(t.repaid)}</div></div>
-      <div><div style="color:var(--muted);font-size:11px">Avg Exp ROI</div><div style="color:var(--gold);font-size:16px;font-weight:700">${t.avgExpRoi.toFixed(1)}%</div></div>
-      <div><div style="color:var(--muted);font-size:11px">Avg Act ROI</div><div style="color:var(--blue);font-size:16px;font-weight:700">${t.avgActRoi.toFixed(1)}%</div></div>
-      ${t.hasCommissionAdj?'<div><div style="color:var(--muted);font-size:11px">Net Profit (after Profit Commission)</div><div style="color:var(--green);font-size:16px;font-weight:700">'+fmt(t.netExpProfit)+'</div></div>':''}
-    </div>
-  </div>
-  <div class="section-label">By Portfolio</div>
-  ${ports.map(p=>{const pd=pData(p.id);const pt=totalsFor(pd.investments,pd.payments);return`<div class="card" style="border-left:3px solid ${p.color};cursor:pointer" onclick="switchPortfolio('${p.id}')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="color:${p.color};font-size:14px;font-weight:700">${p.name}</div><div style="color:var(--muted);font-size:12px">${pt.total} deals · ${pt.active} active</div></div><div style="display:flex;justify-content:space-between"><div><div style="color:var(--muted);font-size:10px">Deployed</div><div style="color:var(--gold-light);font-size:13px;font-weight:700">${fmt(pt.deployed)}</div></div><div><div style="color:var(--muted);font-size:10px">Exp. Profit</div><div style="color:var(--green);font-size:13px;font-weight:700">${fmt(pt.expProfit)}</div></div><div style="text-align:right"><div style="color:var(--muted);font-size:10px">Avg Exp ROI</div><div style="color:${p.color};font-size:13px;font-weight:700">${pt.avgExpRoi.toFixed(1)}%</div></div></div></div>`;}).join('')}
-  <div class="section-label" style="margin-top:4px">Payment Status — Combined</div>
-  ${Object.entries(psAll).map(([label,ps])=>`<div style="background:${psBg[label]};border:1px solid ${psB[label]};border-radius:14px;padding:14px 16px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="color:${psC[label]};font-size:13px;font-weight:700">${label}</div><div style="color:${psC[label]};font-size:22px;font-weight:800">${ps.count}</div></div><div style="display:flex;justify-content:space-between"><div><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px">Outstanding</div><div style="color:var(--text);font-size:13px;font-weight:600;margin-top:2px">${fmt(ps.outstanding)}</div></div><div style="text-align:right"><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px">Received</div><div style="color:var(--text);font-size:13px;font-weight:600;margin-top:2px">${fmt(ps.received)}</div></div></div></div>`).join('')}`;
+  const kpis='<div class="kpi-row">'
+    +kpiTile('Capital working now',fmt(capitalNow),working.length+' active deal'+(working.length!==1?'s':''),'var(--gold-light)')
+    +kpiTile('Due in 30 days',fmt(dueSoonAmt),col.upcoming.length+' deal'+(col.upcoming.length!==1?'s':'')+' maturing','var(--text)')
+    +kpiTile('Overdue',fmt(overdueAmt),col.overdue.length?col.overdue.length+' deal'+(col.overdue.length!==1?'s':'')+' past maturity':'Nothing past maturity',overdueAmt>0?'var(--red)':'var(--green)',overdueAmt>0?'danger':'')
+    +kpiTile('Received in '+year,fmt(ytd),'principal + profit','var(--green)')
+    +'</div>';
+  const stats='<div class="card dash-stats">'
+    +'<div><div class="dash-stat-l">Avg annual rate</div><div class="dash-stat-v" style="color:var(--gold)">'+avgRate.toFixed(1)+'% <span style="font-size:11px;color:var(--muted);font-weight:600">p.a.</span></div></div>'
+    +'<div><div class="dash-stat-l">Expected profit (active)</div><div class="dash-stat-v" style="color:var(--green)">'+fmt(expProfitActive)+'</div></div>'
+    +'<div><div class="dash-stat-l">Deployed, all time</div><div class="dash-stat-v">'+fmt(lifetime)+'</div></div>'
+    +'<div><div class="dash-stat-l">Deals</div><div class="dash-stat-v">'+active.length+' active · '+(invs.length-active.length)+' closed</div></div>'
+    +'</div>';
+  const actionsCard='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div class="chart-title" style="margin:0">Action needed</div><span style="color:var(--muted);font-size:11px">'+actions.length+' deal'+(actions.length!==1?'s':'')+'</span></div>'+dashActionsHTML(actions,isAll)+'</div>';
+  const flowCard='<div class="chart-wrap"><div class="chart-title">Cash in — received (6 months) and maturing (next 6)</div><canvas id="dash-flow" height="170"></canvas>'
+    +'<div style="display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--muted)"><span><span class="dash-dot" style="background:#58A6FF"></span>Received</span><span><span class="dash-dot" style="background:#C9A84C"></span>Outstanding by maturity month</span></div></div>';
+  const statusCard='<div class="card"><div class="chart-title">Payment status</div>'
+    +'<div style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin-bottom:10px;background:var(--border)">'+pss.map(p=>'<div style="width:'+(p.count/total*100)+'%;background:'+psColor[p.label]+'"></div>').join('')+'</div>'
+    +pss.map(p=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--border);cursor:pointer" onclick="setPayFilter(\''+p.label+'\');setTab(\'payments\')">'
+      +'<div style="display:flex;align-items:center;gap:8px"><span class="dash-dot" style="background:'+psColor[p.label]+'"></span><span style="color:var(--text);font-size:12px;font-weight:600">'+p.label+'</span><span style="color:var(--muted);font-size:11px">'+p.count+'</span></div>'
+      +'<div style="color:var(--muted);font-size:11px">Outstanding <span style="color:var(--text);font-weight:600">'+fmt(p.out)+'</span></div></div>').join('')
+    +'</div>';
+  const byPortfolio=isAll?'<div class="card"><div class="chart-title">By portfolio</div>'+ports.map(p=>{
+      const pi=invs.filter(i=>i._pid===p.id),pa=pi.filter(i=>effectiveStatus(i._pid,i)==='Active'&&new Date(i.date)<=now);
+      const cap=pa.reduce((s,i)=>s+principalOutstanding(i._pid,i),0);
+      return'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0 8px 10px;border-top:1px solid var(--border);border-left:3px solid '+p.color+';cursor:pointer" onclick="switchPortfolio(\''+p.id+'\')">'
+        +'<div><div style="color:'+p.color+';font-size:13px;font-weight:700">'+escHTML(p.name)+'</div><div style="color:var(--muted);font-size:11px">'+pi.length+' deals · '+pa.length+' working</div></div>'
+        +'<div style="text-align:right"><div style="color:var(--gold-light);font-size:13px;font-weight:700">'+fmt(cap)+'</div><div style="color:var(--muted);font-size:10px">working now</div></div></div>';
+    }).join('')+'</div>':'';
+  const recentCard='<div class="card"><div class="chart-title">Recent payments</div>'
+    +(recent.length===0?'<div class="empty" style="padding:16px">No payments yet</div>':recent.map(p=>'<div class="row" style="padding:8px 0">'
+      +'<div><div style="color:var(--text);font-size:13px;font-weight:600">'+escHTML(p.company)+'</div><div style="color:var(--muted);font-size:11px;margin-top:2px">'+fmtDate(p.date)+'</div></div>'
+      +'<div style="text-align:right">'+(Number(p.principal||0)!==0?'<div style="color:var(--blue);font-size:13px;font-weight:700">P: '+fmt(p.principal)+'</div>':'')+(Number(p.profit||0)>0?'<div style="color:var(--green);font-size:13px;font-weight:700">R: '+fmt(p.profit)+'</div>':'')+'</div></div>').join(''))
+    +'</div>';
+  return'<div class="page-header"><div class="page-eyebrow" style="color:'+pinfo.color+'">'+escHTML(pinfo.name)+'</div><div class="page-title">Salim Al-Aufi</div><div class="page-sub">'+now.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+(upcomingStarts?' · '+upcomingStarts+' deal'+(upcomingStarts!==1?'s':'')+' starting later':'')+'</div></div>'
+    +banner+kpis
+    +'<div class="dash-grid"><div class="dash-col">'+actionsCard+recentCard+'</div><div class="dash-col">'+flowCard+statusCard+byPortfolio+stats+'</div></div>';
+}
+function initDashboardCharts(){
+  const c=document.getElementById('dash-flow');
+  if(!c||typeof Chart==='undefined')return;
+  const{invs,pays}=dashScope();
+  const now=new Date(),gc='rgba(48,54,61,0.8)';
+  const monthKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const months=[];for(let i=-5;i<=6;i++)months.push(new Date(now.getFullYear(),now.getMonth()+i,1));
+  const rec={},due={};
+  pays.forEach(p=>{const k=String(p.date).slice(0,7);rec[k]=(rec[k]||0)+Number(p.principal||0)+Number(p.profit||0);});
+  const thisKey=monthKey(now);
+  invs.forEach(i=>{
+    if(effectiveStatus(i._pid,i)!=='Active')return;
+    const out=outstandingFor(i._pid,i),mat=maturityDate(i);
+    if(out<=0.01||!mat)return;
+    const k=mat<new Date(now.getFullYear(),now.getMonth(),1)?thisKey:monthKey(mat); // overdue rolls into this month
+    due[k]=(due[k]||0)+out;
+  });
+  const keys=months.map(monthKey);
+  Chart.defaults.color='rgba(255,255,255,0.7)';
+  Chart.defaults.font={family:'Inter',size:11};
+  dashChartInstances.flow=new Chart(c,{type:'bar',data:{labels:months.map(m=>m.toLocaleDateString('en-GB',{month:'short',year:'2-digit'})),datasets:[
+    {label:'Received',data:keys.map(k=>k<=thisKey?+(rec[k]||0).toFixed(2):0),backgroundColor:'#58A6FFAA',borderRadius:4,borderSkipped:false,stack:'s'},
+    {label:'Maturing',data:keys.map(k=>k>=thisKey?+(due[k]||0).toFixed(2):0),backgroundColor:'#C9A84C88',borderRadius:4,borderSkipped:false,stack:'s'}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': OMR '+Number(ctx.raw).toLocaleString()}}},
+      scales:{x:{stacked:true,grid:{color:gc},ticks:{font:{size:9}}},y:{stacked:true,grid:{color:gc},ticks:{callback:v=>Number(v)>=1000?(Number(v)/1000)+'k':v}}}}});
 }
 
 // INVESTMENTS
@@ -941,7 +1266,13 @@ function investmentsHTML(){
   const filterGroup=(items,active,handler)=>'<div style="display:inline-flex;border:1px solid var(--border);border-radius:20px;padding:3px;gap:2px">'
     +items.map(f=>`<button onclick="${handler}('${f}')" style="border:none;border-radius:16px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;background:${active===f?'var(--gold)':'transparent'};color:${active===f?'#000':'var(--muted)'}">${f}</button>`).join('')
     +'</div>';
-  return`<div class="page-header"><div class="page-eyebrow">${currentPortfolio==='all'?'All Portfolios':pInfo(currentPortfolio).name}</div><div class="page-title">${filtered.length} Deal${filtered.length!==1?'s':''}</div></div>
+  const wide=layoutMode()!=='phone',desk=layoutMode()==='desktop';
+  // In the side-by-side layout a deal is always selected: keep the current one, else the first listed
+  if(wide&&!(detailId!=null&&pData(detailPortfolio).investments.some(i=>i.id===detailId))){
+    detailId=filtered.length?filtered[0].id:null;detailPortfolio=filtered.length?filtered[0]._pid:null;
+  }
+  const isSel=inv=>wide&&inv.id===detailId&&inv._pid===detailPortfolio;
+  const head=`<div class="page-header"><div class="page-eyebrow">${currentPortfolio==='all'?'All Portfolios':pInfo(currentPortfolio).name}</div><div class="page-title">${filtered.length} Deal${filtered.length!==1?'s':''}</div></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
     ${filterGroup(statusFilters,invStatusFilter,'toggleInvStatusFilter')}
     ${filterGroup(sourceFilters,invSourceFilter,'toggleInvSourceFilter')}
@@ -949,11 +1280,31 @@ function investmentsHTML(){
   <div style="display:flex;gap:8px;margin:10px 0 14px">
     <input id="inv-search" type="text" value="${invSearch.replace(/"/g,'&quot;')}" placeholder="Search company, code, notes…" oninput="setInvSearch(this.value)" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px">
     <select onchange="setInvSort(this.value)" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 8px;color:var(--text);font-size:12px">${Object.keys(sortLabels).map(k=>`<option value="${k}" ${invSort===k?'selected':''}>${sortLabels[k]}</option>`).join('')}</select>
-  </div>
-  ${filtered.length===0?'<div class="empty">No investments match this filter</div>':filtered.map(inv=>{
+  </div>`;
+  if(desk){
+    const sortHead=(label,key,alt,align)=>{const on=invSort===key||invSort===alt;const next=invSort===key&&alt?alt:key;
+      return`<th class="${align||''}" onclick="setInvSort('${next}')" style="cursor:pointer;${on?'color:var(--gold)':''}">${label}${on?(invSort===alt?' ▴':' ▾'):''}</th>`;};
+    const table=filtered.length===0?'<div class="empty">No investments match this filter</div>':`<table class="deal-table"><thead><tr>
+      ${sortHead('Company','company_asc')}${currentPortfolio==='all'?'<th>Portfolio</th>':''}${sortHead('Deployed','deployed_desc','deployed_asc','num')}${sortHead('Rate','roi_desc',null,'num')}<th class="num">Term</th>${sortHead('Matures','maturity_asc',null,'num')}<th class="num">Received</th><th class="num">Status</th></tr></thead><tbody>
+      ${filtered.map(inv=>{const st=effectiveStatus(inv._pid,inv),mat=maturityDate(inv),od=isOverdue(inv,inv._pid);
+        const rec=invPaymentsFor(inv._pid,inv.id).reduce((s,p)=>s+Number(p.principal||0)+Number(p.profit||0),0);
+        const stTxt=st==='Closed'?'Closed':od?'Overdue':paymentStatus(inv._pid,inv)==='No Payment'?'Active':paymentStatus(inv._pid,inv)==='Full Payment'?'Paid':'Partial';
+        const stCol=st==='Closed'?'var(--dim)':od?'var(--red)':stTxt==='Partial'?'var(--blue)':'var(--green)';
+        return`<tr class="${isSel(inv)?'sel':''}" onclick="openDetail(${inv.id},'${inv._pid}')">
+          <td><div style="font-weight:600;color:var(--text)">${escHTML(inv.company)}</div>${inv.invCode?'<div style="color:var(--muted);font-size:11px">'+escHTML(inv.invCode)+'</div>':''}</td>
+          ${currentPortfolio==='all'?'<td style="color:'+inv._pcolor+';font-weight:600">'+escHTML(inv._pname)+'</td>':''}
+          <td class="num" style="color:var(--gold-light);font-weight:700">${fmt(inv.deployed)}</td>
+          <td class="num">${inv.roi}%</td><td class="num">${fmtDuration(inv.duration)}</td>
+          <td class="num" style="color:${od?'var(--red)':'var(--muted)'}">${mat?fmtMonthYear(mat):'—'}</td>
+          <td class="num" style="color:var(--green)">${fmt(rec)}</td>
+          <td class="num" style="color:${stCol};font-weight:600">${stTxt}</td></tr>`;}).join('')}
+      </tbody></table>`;
+    return`<div class="split split-desk"><div class="split-list">${head}${table}<div style="height:16px"></div></div><div class="split-detail">${detailId!=null?detailHTML():'<div class="empty">Select a deal</div>'}</div></div>`;
+  }
+  const cards=`${filtered.length===0?'<div class="empty">No investments match this filter</div>':filtered.map(inv=>{
     const mat=maturityDate(inv),overdue=isOverdue(inv),pending=profitPending(inv._pid,inv),isOd=hasNetAdjustment(inv),actProf=actualProfit(inv._pid,inv);
     return`
-  <div class="card" onclick="openDetail(${inv.id},'${inv._pid}')" style="cursor:pointer">
+  <div class="card${isSel(inv)?' card-sel':''}" onclick="openDetail(${inv.id},'${inv._pid}')" style="cursor:pointer">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
       <div style="flex:1;margin-right:10px">
         <div style="color:var(--text);font-size:15px;font-weight:700;margin-bottom:6px">${inv.company}</div>
@@ -963,11 +1314,13 @@ function investmentsHTML(){
     </div>
     <div style="display:flex;justify-content:space-between">
       <div><div style="color:var(--muted);font-size:11px">Exp. Profit</div><div style="color:var(--green);font-size:13px;font-weight:600">${fmt(expectedProfit(inv))}</div>${actProf>0?'<div style="color:var(--blue);font-size:10px;margin-top:1px">Act: '+fmt(actProf)+'</div>':''}${isOd?'<div style="color:var(--muted);font-size:10px;margin-top:1px">Net: '+fmt(netProfit(inv))+'</div>':''}</div>
-      <div style="text-align:center"><div style="color:var(--muted);font-size:11px">Exp. ROI</div><div style="color:var(--gold);font-size:13px;font-weight:600">${expectedRoi(inv).toFixed(1)}%</div>${isOd?'<div style="color:var(--muted);font-size:10px;margin-top:1px">Net: '+netRoi(inv).toFixed(1)+'%</div>':''}</div>
+      <div style="text-align:center"><div style="color:var(--muted);font-size:11px">Rate</div><div style="color:var(--gold);font-size:13px;font-weight:600">${inv.roi}% p.a.</div><div style="color:var(--muted);font-size:10px;margin-top:1px">${expectedRoi(inv).toFixed(1)}% over term</div>${isOd?'<div style="color:var(--muted);font-size:10px;margin-top:1px">Net: '+netRoi(inv).toFixed(1)+'%</div>':''}</div>
       <div style="text-align:right"><div style="color:var(--muted);font-size:11px">Duration</div><div style="color:var(--text);font-size:13px;font-weight:600">${fmtDuration(inv.duration)}</div>${mat?'<div style="color:'+(overdue?'var(--red)':'var(--muted)')+';font-size:10px;margin-top:1px">'+(overdue?'Overdue since ':'Matures ')+fmtMonthYear(mat)+'</div>':''}</div>
     </div>
   </div>`;}).join('')}
   <div style="height:10px"></div>`;
+  if(wide)return`<div class="split"><div class="split-list">${head}${cards}</div><div class="split-detail">${detailId!=null?detailHTML():'<div class="empty">Select a deal</div>'}</div></div>`;
+  return head+cards;
 }
 
 // DETAIL
@@ -984,8 +1337,8 @@ function detailHTML(){
     {label:'Duration',val:fmtDuration(inv.duration),color:'var(--text)'},
     {label:'Start Date',val:fmtDate(inv.date),color:'var(--text)'},
     {label:'Maturity Date',val:mat?fmtMonthYear(mat)+(overdue?' (overdue)':''):'—',color:overdue?'var(--red)':'var(--text)'},
-    {label:'Annual ROI',val:`${inv.roi}%`,color:'var(--gold)'},
-    {label:'Expected ROI',val:`${expectedRoi(inv).toFixed(1)}%`,color:'var(--purple)'},
+    {label:'Annual Rate',val:`${inv.roi}% p.a.`,color:'var(--gold)'},
+    {label:'Return over Full Term',val:`${expectedRoi(inv).toFixed(1)}%`,color:'var(--purple)'},
     {label:'Expected Profit',val:fmt(expectedProfit(inv)),color:'var(--green)'},
     {label:'Actual Profit Received',val:fmt(actualProfit(pid,inv)),color:'var(--blue)'},
     {label:'Annual Profit',val:fmt(Number(inv.deployed)*Number(inv.roi)/100),color:'var(--green)'},
@@ -1030,7 +1383,7 @@ function paymentsHTML(){
   const totalRec=allInvs.reduce((s,i)=>s+invPaymentsFor(i._pid,i.id).reduce((ss,p)=>ss+Number(p.principal||0)+Number(p.profit||0),0),0);
   return`<div class="page-header"><div class="page-eyebrow">${currentPortfolio==='all'?'All Portfolios':pInfo(currentPortfolio).name}</div><div class="page-title">${allInvs.length} Deal${allInvs.length!==1?'s':''}</div><div class="page-sub">Received: ${fmt(totalRec)} · Outstanding: ${fmt(totalOut)}</div></div>
   <div class="chips">${filters.map(f=>`<button class="chip ${payFilter===f?'chip-active':'chip-inactive'}" onclick="setPayFilter('${f}')">${f}</button>`).join('')}</div>
-  ${allInvs.length===0?'<div class="empty">No deals match this filter</div>':allInvs.map(inv=>{
+  <div class="card-grid">${allInvs.length===0?'<div class="empty">No deals match this filter</div>':allInvs.map(inv=>{
     const ps=paymentStatus(inv._pid,inv),pays=invPaymentsFor(inv._pid,inv.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
     const received=pays.reduce((s,p)=>s+Number(p.principal||0)+Number(p.profit||0),0),out=outstandingFor(inv._pid,inv);
     return`<div class="card" style="margin-bottom:10px">
@@ -1044,7 +1397,7 @@ function paymentsHTML(){
         <div style="text-align:right"><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px">Outstanding</div><div style="color:${out>0?'var(--red)':'var(--dim)'};font-size:13px;font-weight:600;margin-top:2px">${fmt(out)}</div></div>
       </div>
       ${renderPaymentTable(pays,inv._pid)}
-    </div>`;}).join('')}
+    </div>`;}).join('')}</div>
   <div style="height:10px"></div>`;
 }
 
@@ -1096,12 +1449,15 @@ function reportsHTML(){
     <div class="stat-card"><div style="font-size:16px;font-weight:800;color:var(--green)">${fmt(totalExp)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Exp. Profit</div></div>
     <div class="stat-card"><div style="font-size:16px;font-weight:800;color:var(--blue)">${fmt(totalOut)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Outstanding</div></div>
   </div>
+  <div class="wide-grid">
   <div class="chart-wrap"><div class="chart-title">Capital Deployed by Year</div><canvas id="chart-bar" height="180"></canvas></div>
   <div class="chart-wrap"><div class="chart-title">Payment Status Breakdown</div><canvas id="chart-donut" height="200"></canvas></div>
   <div class="chart-wrap"><div class="chart-title">ROI by Deal (Top 15)</div><canvas id="chart-roi" height="220"></canvas></div>
   <div class="chart-wrap"><div class="chart-title">Cumulative Payments Over Time</div><canvas id="chart-line" height="180"></canvas></div>
+  </div>
   <div class="section-label" style="margin-top:4px">Filtered Deals (${invs.length})</div>
-  ${invs.length===0?'<div class="empty">No deals match these filters</div>':invs.map(inv=>`<div class="card" style="padding:12px 14px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div style="color:var(--text);font-size:13px;font-weight:700">${inv.company}</div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${paymentStatusBadge(inv._pid,inv)}<span class="badge" style="background:${inv._pcolor}22;color:${inv._pcolor};border-color:${inv._pcolor}66">${inv._pname}</span></div></div><div style="text-align:right;flex-shrink:0;margin-left:8px"><div style="color:var(--gold-light);font-size:13px;font-weight:700">${fmt(inv.deployed)}</div><div style="color:var(--gold);font-size:12px">${expectedRoi(inv).toFixed(1)}% exp.</div></div></div></div>`).join('')}
+  <div class="card-grid">${invs.length===0?'<div class="empty">No deals match these filters</div>':invs.map(inv=>`<div class="card" style="padding:12px 14px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div style="color:var(--text);font-size:13px;font-weight:700">${inv.company}</div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${paymentStatusBadge(inv._pid,inv)}<span class="badge" style="background:${inv._pcolor}22;color:${inv._pcolor};border-color:${inv._pcolor}66">${inv._pname}</span></div></div><div style="text-align:right;flex-shrink:0;margin-left:8px"><div style="color:var(--gold-light);font-size:13px;font-weight:700">${fmt(inv.deployed)}</div><div style="color:var(--gold);font-size:12px">${expectedRoi(inv).toFixed(1)}% exp.</div></div></div></div>`).join('')}
+  </div>
   <div style="height:10px"></div>`;
 }
 function initReportCharts(){
@@ -1304,6 +1660,7 @@ function setupHTML(){
     +'<div class="card" style="margin-bottom:10px">'+portMgmt
     +'<button class="btn btn-ghost" style="margin-top:10px" onclick="openAddPortfolio()">+ Add Portfolio</button></div>'
     +syncSectionHTML()
+    +historySectionHTML()
     +'<div class="section-label">Export</div>'
     +'<div class="card" style="margin-bottom:10px">'
     +'<div style="color:var(--text);font-size:14px;font-weight:700;margin-bottom:4px">Export to JSON</div>'
@@ -1701,7 +2058,7 @@ function openAddInvestment(){
   <div class="field"><label>Company</label><input id="m-company" type="text" placeholder="e.g. Al Batinah Trading" oninput="updateConcentrationPreview()"></div>
   <div class="field"><label id="m-deployed-label">Capital (OMR)</label><input id="m-deployed" type="number" placeholder="e.g. 50000" inputmode="decimal" oninput="updateConcentrationPreview()"></div>
   <div id="conc-preview"></div>
-  <div class="field"><label>Annual ROI (%)</label><input id="m-roi" type="number" placeholder="e.g. 12" inputmode="decimal"></div>
+  <div class="field"><label>Annual Rate (% p.a.)</label><input id="m-roi" type="number" placeholder="e.g. 12" inputmode="decimal"></div>
   <div class="field"><label>Duration (months)</label><input id="m-duration" type="number" placeholder="e.g. 12" inputmode="numeric"></div>
   <div class="field"><label>Fund Source</label><select id="m-source"><option>Cash</option><option>Loan</option><option>OD Facility</option></select></div>
   <div class="field"><label>Start Date</label><input id="m-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
@@ -1717,7 +2074,7 @@ function openEditInvestment(id,pid){
   <div class="field"><label>Company</label><input id="m-company" type="text" value="${inv.company}" oninput="updateConcentrationPreview(${id})"></div>
   <div class="field"><label id="m-deployed-label">Capital (OMR)</label><input id="m-deployed" type="number" value="${inv.deployed}" inputmode="decimal" oninput="updateConcentrationPreview(${id})"></div>
   <div id="conc-preview"></div>
-  <div class="field"><label>Annual ROI (%)</label><input id="m-roi" type="number" value="${inv.roi}" inputmode="decimal"></div>
+  <div class="field"><label>Annual Rate (% p.a.)</label><input id="m-roi" type="number" value="${inv.roi}" inputmode="decimal"></div>
   <div class="field"><label>Duration (months)</label><input id="m-duration" type="number" value="${inv.duration||''}" inputmode="numeric"></div>
   <div class="field"><label>Fund Source</label><select id="m-source"><option ${inv.fundSource==='Cash'?'selected':''}>Cash</option><option ${inv.fundSource==='Loan'?'selected':''}>Loan</option><option ${inv.fundSource==='OD Facility'?'selected':''}>OD Facility</option></select></div>
   <div class="field"><label>Start Date</label><input id="m-date" type="date" value="${inv.date}"></div>
@@ -1932,9 +2289,9 @@ function importData(e){
   };
   r.readAsText(file);e.target.value='';
 }
-function doImport(){const i=window._pi;if(!i){closeModal();return;}state=i;saveState();window._pi=null;closeModal();currentPortfolio=state.portfolios[0]?.id||'wadiaa';currentTab='dashboard';render();showToast(`Imported ${state.portfolios.length} portfolios ✓`);}
-function confirmReset(){showModal(`<div class="modal-handle"></div><div class="modal-title">Reset All Data?</div><div style="color:var(--muted);font-size:14px;line-height:1.7;margin-bottom:20px">Restores original Wadiaa data. <b style="color:var(--red)">Cannot be undone.</b></div><button class="btn btn-danger" onclick="doReset()">Yes, Reset</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button>`);}
-function doReset(){state=defaultState();saveState();closeModal();currentPortfolio='wadiaa';currentTab='dashboard';render();showToast('Reset complete ✓');}
+function doImport(){const i=window._pi;if(!i){closeModal();return;}adoptState(JSON.stringify(i));saveState({label:'Imported a JSON backup ('+state.portfolios.length+' portfolios)',snapshot:true});window._pi=null;closeModal();currentPortfolio=state.portfolios[0]?.id||'wadiaa';currentTab='dashboard';render();showToast(`Imported ${state.portfolios.length} portfolios ✓`);}
+function confirmReset(){showModal(`<div class="modal-handle"></div><div class="modal-title">Reset All Data?</div><div style="color:var(--muted);font-size:14px;line-height:1.7;margin-bottom:20px">Restores original Wadiaa data. A snapshot of your current data is saved first, so you can restore it from Setup → Snapshots.</div><button class="btn btn-danger" onclick="doReset()">Yes, Reset</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button>`);}
+function doReset(){adoptState(JSON.stringify(defaultState()));saveState({label:'Reset all data to the original set',snapshot:true});closeModal();currentPortfolio='wadiaa';currentTab='dashboard';render();showToast('Reset complete ✓');}
 
 function saveCombinedPayment(){
   const pid=document.getElementById('m-pid').value;
@@ -2089,7 +2446,7 @@ function analyticsHTML(){
   const overdueList=allInv.filter(i=>isOverdue(i));
 
   // Scorecard
-  const scorecard='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
+  const scorecard='<div class="kpi-row" style="gap:8px;margin-bottom:14px">'
     +kpiCard('Total Deployed',fmt(totalDeployed),'var(--gold-light)')
     +kpiCard('Expected Return',fmt(totalExpReturn),'var(--purple)')
     +kpiCard('Total Received',fmt(totalReceived),'var(--green)')
@@ -2191,12 +2548,15 @@ function analyticsHTML(){
     +'<div class="page-sub">'+allInv.length+' deal'+(allInv.length!==1?'s':'')+' · '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'</div></div>'
     +'<div class="section-label">Executive Scorecard</div>'
     +scorecard
+    +'<div class="wide-grid"><div>'
     +'<div class="section-label">Concentration Risk — Active Capital by Borrower</div>'
     +'<div class="card" style="padding:12px;margin-bottom:12px">'+concentrationTable(allInv)+'</div>'
+    +'</div><div>'
     +'<div class="section-label">Cash Flow Forecast — Expected Collections</div>'
     +'<div class="card" id="cf-card" style="padding:12px;margin-bottom:12px">'+cashFlowHTML(cashFlowBuckets(allInv))+'</div>'
     +'<div class="section-label">Collections — Needs Follow-up</div>'
     +'<div class="card" style="padding:12px;margin-bottom:12px">'+collectionsHTML(collectionsList(allInv))+'</div>'
+    +'</div></div>'
     +(isAll?'<div class="chart-wrap"><div class="chart-title">Portfolio Comparison — Deployed vs Profit vs Received</div><canvas id="anl-port-bar" height="170"></canvas></div>':'')
     +(isAll?'<div class="section-label">Portfolio Breakdown</div>'+
       '<div class="card" style="padding:12px;margin-bottom:12px">'+portTable+'</div>':'')
@@ -2211,14 +2571,18 @@ function analyticsHTML(){
       +'<div class="chart-wrap" style="margin:0"><div class="chart-title" style="font-size:12px">ROI Distribution</div><canvas id="anl-roi-dist" height="160"></canvas></div>'
       +'</div>'
     )
+    +'<div class="wide-grid">'
     +'<div class="chart-wrap"><div class="chart-title">ROI by Deal (sorted highest first)</div><canvas id="anl-roi-bar" height="220"></canvas></div>'
     +'<div class="chart-wrap"><div class="chart-title">Realised ROI vs Target (Cumulative)</div><canvas id="anl-benchmark" height="180"></canvas></div>'
     +'<div class="chart-wrap"><div class="chart-title">Cumulative Cash Flow Received</div><canvas id="anl-cashflow" height="170"></canvas></div>'
     +'<div class="chart-wrap"><div id="anl-monthly-header">'+monthlyHeaderHTML()+'</div><canvas id="anl-monthly" height="160"></canvas></div>'
+    +'</div><div class="wide-grid"><div>'
     +'<div class="section-label">Deal Performance (lowest collection first)</div>'
     +'<div class="card" style="padding:12px;margin-bottom:12px">'+dealTable+'</div>'
+    +'</div><div>'
     +'<div class="section-label">Maturity Schedule — Next 8 Active Deals</div>'
     +'<div class="card" style="padding:12px;margin-bottom:12px">'+matTable+'</div>'
+    +'</div></div>'
     +'<div style="height:10px"></div>';
 }
 
@@ -2699,7 +3063,7 @@ function renderPaymentTable(pays,pid){
 // NAVIGATION
 function switchPortfolio(pid){currentPortfolio=pid;invStatusFilter='All';invSourceFilter='All';payFilter='All';detailId=null;if(currentTab==='detail')currentTab='investments';render();}
 function setTab(t){currentTab=t;detailId=null;render();}
-function openDetail(id,pid){detailId=id;detailPortfolio=pid;currentTab='detail';render();}
+function openDetail(id,pid){detailId=id;detailPortfolio=pid;currentTab=layoutMode()==='phone'?'detail':'investments';render();}
 function goBack(){currentTab='investments';detailId=null;render();}
 function toggleInvStatusFilter(f){invStatusFilter=invStatusFilter===f?'All':f;render();}
 function toggleInvSourceFilter(f){invSourceFilter=invSourceFilter===f?'All':f;render();}
@@ -2722,7 +3086,23 @@ function toggleCashFlowBucket(key){
 function setPayFilter(f){payFilter=f;render();}
 
 // TOAST
-function showToast(msg,isError){const t=document.getElementById('toast');t.textContent=msg;t.style.background=isError?'var(--red)':'var(--green)';t.style.color=isError?'#fff':'#000';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+let _toastTimer=null;
+function showToast(msg,isError){
+  const t=document.getElementById('toast');
+  const undo=!isError&&_pendingUndoToast;
+  _pendingUndoToast=null;
+  t.textContent=msg;
+  if(undo){
+    const b=document.createElement('button');
+    b.className='toast-undo';b.textContent='Undo';b.onclick=undoLast;
+    t.appendChild(b);
+  }
+  t.style.background=isError?'var(--red)':'var(--green)';t.style.color=isError?'#fff':'#000';
+  t.classList.toggle('has-action',!!undo);
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>t.classList.remove('show'),undo?6000:2200);
+}
 
 // INSTALL
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});
@@ -2733,34 +3113,104 @@ function dismissInstall(){showInstallBanner=false;localStorage.setItem('saf_inst
 // ═══════════════════════════════════════════════════════════════
 // PASSWORD / LOCK ENGINE
 // ═══════════════════════════════════════════════════════════════
-const PWD_KEY = 'ipt_pwd_v1';
+const PWD_KEY = 'ipt_pwd_v1'; // legacy 32-bit hash — only read to migrate, then removed
+const PWD_REC_KEY = 'ipt_pwd_v2';
 const DEFAULT_PWD = '1234Abc';
+const PBKDF2_ITER = 310000;
+const HAS_SUBTLE = !!(window.crypto && crypto.subtle);
 let _unlocked = false;
+let _sessionKey = null; // AES-GCM key derived from the password; lives in memory only while unlocked
 
+// Legacy hash — kept only to verify passwords set before the PBKDF2 upgrade (or when WebCrypto is
+// unavailable, e.g. plain-http hosting).
 function hashPwd(pwd){
-  // Simple deterministic hash — good enough for local app privacy
   let h = 0;
   for(let i = 0; i < pwd.length; i++){
     h = Math.imul(31, h) + pwd.charCodeAt(i) | 0;
   }
   return 'h' + Math.abs(h).toString(36);
 }
-
 function getStoredHash(){
   return localStorage.getItem(PWD_KEY) || hashPwd(DEFAULT_PWD);
 }
 
-function doUnlock(){
+function b64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)));}
+function unb64(s){return Uint8Array.from(atob(s), c => c.charCodeAt(0));}
+function loadPwdRecord(){
+  try{ const r = JSON.parse(localStorage.getItem(PWD_REC_KEY)); return r && r.salt && r.hash ? r : null; }
+  catch(e){ return null; }
+}
+// PBKDF2-SHA256 → 512 bits: the first half is stored as the verifier, the second half becomes the
+// AES-GCM key that encrypts the Gist token. The key half is never written anywhere.
+async function derivePwd(pwd, saltBytes, iter){
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pwd), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2', hash:'SHA-256', salt:saltBytes, iterations:iter}, base, 512));
+  const key = await crypto.subtle.importKey('raw', bits.slice(32), {name:'AES-GCM'}, false, ['encrypt','decrypt']);
+  return { hash: b64(bits.slice(0, 32)), key };
+}
+async function createPwdRecord(pwd){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const d = await derivePwd(pwd, salt, PBKDF2_ITER);
+  localStorage.setItem(PWD_REC_KEY, JSON.stringify({ salt: b64(salt), iter: PBKDF2_ITER, hash: d.hash, isDefault: pwd === DEFAULT_PWD }));
+  localStorage.removeItem(PWD_KEY);
+  return d.key;
+}
+// Returns {ok, key}. Transparently upgrades a legacy-hash password to a PBKDF2 record on success.
+async function verifyPwd(pwd){
+  const rec = HAS_SUBTLE ? loadPwdRecord() : null;
+  if(rec){
+    const d = await derivePwd(pwd, unb64(rec.salt), rec.iter || PBKDF2_ITER);
+    return d.hash === rec.hash ? { ok: true, key: d.key } : { ok: false };
+  }
+  if(hashPwd(pwd) !== getStoredHash()) return { ok: false };
+  return { ok: true, key: HAS_SUBTLE ? await createPwdRecord(pwd) : null };
+}
+function isDefaultPwd(){
+  const rec = loadPwdRecord();
+  if(rec) return !!rec.isDefault;
+  return !localStorage.getItem(PWD_KEY);
+}
+
+async function encryptSecret(text){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, _sessionKey, new TextEncoder().encode(text));
+  return { iv: b64(iv), ct: b64(ct) };
+}
+async function decryptSecret(enc){
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv: unb64(enc.iv)}, _sessionKey, unb64(enc.ct));
+  return new TextDecoder().decode(pt);
+}
+// After unlock: decrypt the stored Gist token into memory, or encrypt a legacy plaintext one.
+async function unlockSyncToken(){
+  if(!_sessionKey) return;
+  try{
+    if(syncConfig.tokenEnc) syncConfig.token = await decryptSecret(syncConfig.tokenEnc);
+    else if(syncConfig.token){ syncConfig.tokenEnc = await encryptSecret(syncConfig.token); saveSyncConfig(syncConfig); }
+  }catch(e){
+    console.warn('Could not decrypt the Gist token:', e);
+    syncConfig.token = ''; syncConfig.tokenEnc = null; saveSyncConfig(syncConfig);
+    showToast('Gist token could not be decrypted — reconnect in Setup', true);
+  }
+}
+
+async function doUnlock(){
   const inp = document.getElementById('lock-input');
   const err = document.getElementById('lock-error');
   const val = inp.value;
   if(!val){ err.textContent = 'Please enter your password'; return; }
-  if(hashPwd(val) === getStoredHash()){
+  err.textContent = 'Checking…';
+  let res;
+  try{ res = await verifyPwd(val); }
+  catch(e){ console.error(e); err.textContent = 'Could not verify password'; return; }
+  if(res.ok){
     _unlocked = true;
+    _sessionKey = res.key;
+    await unlockSyncToken();
     document.getElementById('lock-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     err.textContent = '';
     render();
+    if(isDefaultPwd()) showToast('You are using the default password — change it in Setup', true);
   } else {
     err.textContent = 'Incorrect password — try again';
     inp.value = '';
@@ -2800,6 +3250,9 @@ function updateTargetRoi(){
 }
 function lockApp(){
   _unlocked = false;
+  _sessionKey = null;
+  if(syncConfig.tokenEnc) syncConfig.token = ''; // drop the decrypted token from memory
+  updateLockHint();
   document.getElementById('app').style.display = 'none';
   document.getElementById('fab').style.display = 'none';
   const ls = document.getElementById('lock-screen');
@@ -2812,19 +3265,29 @@ function lockApp(){
   setTimeout(() => inp.focus(), 100);
 }
 
-function changePassword(oldPwd, newPwd, confirmPwd){
-  if(hashPwd(oldPwd) !== getStoredHash()){
-    showToast('Current password is incorrect', true); return;
+async function changePassword(oldPwd, newPwd, confirmPwd){
+  if(!newPwd || newPwd.length < 6){
+    showToast('New password must be at least 6 characters', true); return;
   }
-  if(!newPwd || newPwd.length < 4){
-    showToast('New password must be at least 4 characters', true); return;
+  if(newPwd === DEFAULT_PWD){
+    showToast('Choose something other than the default password', true); return;
   }
   if(newPwd !== confirmPwd){
     showToast('New passwords do not match', true); return;
   }
-  localStorage.setItem(PWD_KEY, hashPwd(newPwd));
+  if(!(await verifyPwd(oldPwd)).ok){
+    showToast('Current password is incorrect', true); return;
+  }
+  if(HAS_SUBTLE){
+    // New password → new AES key, so the Gist token is re-encrypted under it
+    _sessionKey = await createPwdRecord(newPwd);
+    if(syncConfig.token){ syncConfig.tokenEnc = await encryptSecret(syncConfig.token); saveSyncConfig(syncConfig); }
+  } else {
+    localStorage.setItem(PWD_KEY, hashPwd(newPwd));
+  }
   closeModal();
   showToast('Password changed ✓');
+  render();
 }
 
 function openChangePwd(){
@@ -2836,6 +3299,13 @@ function openChangePwd(){
   <button class="btn btn-gold" onclick="changePassword(document.getElementById('pwd-old').value,document.getElementById('pwd-new').value,document.getElementById('pwd-confirm').value)">Save New Password</button>
   <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>`);
 }
+
+// The default-password hint only shows until the password has been changed
+function updateLockHint(){
+  const el = document.getElementById('lock-hint');
+  if(el) el.textContent = isDefaultPwd() ? 'Default password: ' + DEFAULT_PWD : '';
+}
+updateLockHint();
 
 // Focus password field on load
 window.addEventListener('load', () => {
@@ -2875,7 +3345,7 @@ function migratePaymentsIfNeeded(){
     pd.nextPayId=pd.payments.length+1;
     migrated=true;
   });
-  if(migrated){saveState();console.log('Payment data migrated to unified format');}
+  if(migrated){saveState({label:'Converted payments to the principal/profit format',silent:true});console.log('Payment data migrated to unified format');}
 }
 
 // App starts locked — render() called after unlock
