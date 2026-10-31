@@ -103,7 +103,11 @@ canvas{max-width:100%}
 .lock-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px}
 .lock-btn{width:100%;max-width:320px;padding:16px;background:var(--gold);color:#000;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s}
 .lock-btn:active{opacity:0.85}
+.lock-btn.secondary{background:var(--card);color:var(--muted);border:1px solid var(--border)}
 .lock-error{color:var(--red);font-size:13px;font-weight:600;margin-top:10px;min-height:20px;text-align:center}
+.lock-bio-btn{width:100%;max-width:320px;display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:var(--gold);color:#000;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:6px}
+.lock-bio-btn:active{opacity:0.85}
+.lock-or{color:var(--dim);font-size:12px;margin:12px 0 14px;text-align:center}
 .lock-hint{color:var(--dim);font-size:11px;margin-top:32px;text-align:center}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 
@@ -191,12 +195,14 @@ if('serviceWorker' in navigator){
 <div id="lock-screen" class="lock-screen">
   <div class="lock-logo">📈</div>
   <div class="lock-title">Investment Portfolio Tracker</div>
-  <div class="lock-sub">Salim Al-Aufi · Enter password to continue</div>
+  <div class="lock-sub" id="lock-sub">Salim Al-Aufi · Enter password to continue</div>
+  <button class="lock-bio-btn" id="lock-bio-btn" style="display:none" onclick="doBioUnlock()"><span style="font-size:22px">☝</span>Unlock with fingerprint / face</button>
+  <div class="lock-or" id="lock-or" style="display:none">or use your password</div>
   <div class="lock-input-wrap">
     <input class="lock-input" id="lock-input" type="password" placeholder="Password" maxlength="32" onkeydown="if(event.key==='Enter')doUnlock()">
     <button class="lock-eye" id="lock-eye" onclick="toggleLockEye()">👁</button>
   </div>
-  <button class="lock-btn" onclick="doUnlock()">Unlock</button>
+  <button class="lock-btn" id="lock-btn" onclick="doUnlock()">Unlock</button>
   <div class="lock-error" id="lock-error"></div>
   <div class="lock-hint" id="lock-hint"></div>
 </div>
@@ -529,7 +535,8 @@ function saveSyncConfig(cfg){
 }
 let syncConfig=loadSyncConfig();
 
-function isSyncConnected(){return!!(syncConfig.gistId&&syncConfig.token);}
+// Connected = a Gist ID plus a token, even if the token is still encrypted (see ensureSessionKey)
+function isSyncConnected(){return!!(syncConfig.gistId&&(syncConfig.token||syncConfig.tokenEnc));}
 function isSyncDirty(){
   if(!isSyncConnected())return false;
   if(!syncConfig.lastSyncedAt)return true;
@@ -575,6 +582,7 @@ async function connectSync(){
   const gistId=document.getElementById('sync-gist-id').value.trim();
   const token=document.getElementById('sync-token').value.trim();
   if(!gistId||!token){showToast('Enter both the Gist ID and your access token',true);return;}
+  if(!(await ensureSessionKey('Your password is needed to store the access token encrypted.')))return;
   const tokenEnc=_sessionKey?await encryptSecret(token):null;
   syncConfig={gistId,token,tokenEnc,filename:syncConfig.filename||'investment-portfolio-tracker-state.json',lastSyncedAt:null,lastSyncedRemoteUpdatedAt:null,localChangeSeq:syncConfig.localChangeSeq||1,syncedSeq:0};
   saveSyncConfig(syncConfig);
@@ -588,9 +596,17 @@ function disconnectSync(){
   render();
   showToast('Disconnected');
 }
+// The token may still be encrypted after a fingerprint unlock on a device without PRF support
+async function syncTokenReady(){
+  if(syncConfig.token)return true;
+  if(!(await ensureSessionKey('Your password is needed once this session to unlock the Gist access token.')))return false;
+  if(!syncConfig.token){showToast('Access token unavailable — reconnect in Setup',true);return false;}
+  return true;
+}
 async function syncPushNow(){
   const cfg=syncConfig;
   if(!isSyncConnected()){showToast('Connect to a Gist first',true);return;}
+  if(!(await syncTokenReady()))return;
   const btn=document.getElementById('sync-push-btn');
   if(btn){btn.disabled=true;btn.textContent='Pushing…';}
   try{
@@ -610,6 +626,7 @@ async function syncPushNow(){
 async function syncPullNow(){
   const cfg=syncConfig;
   if(!isSyncConnected()){showToast('Connect to a Gist first',true);return;}
+  if(!(await syncTokenReady()))return;
   if(!confirm('This replaces ALL data on this device with what\'s saved in the Gist. Anything entered here since your last sync is replaced too — a snapshot of it is kept in Setup → Snapshots. Continue?'))return;
   const btn=document.getElementById('sync-pull-btn');
   if(btn){btn.disabled=true;btn.textContent='Pulling…';}
@@ -1631,6 +1648,7 @@ function setupHTML(){
     +'<button class="btn btn-gold" style="margin:0;flex:1;padding:12px" onclick="openChangePwd()">Change Password</button>'
     +'<button class="btn btn-ghost" style="margin:0;flex:1;padding:12px" onclick="lockApp()">🔒 Lock Now</button>'
     +'</div></div>'
+    +securityExtrasHTML()
     +'<div class="card-hero" style="margin-bottom:16px">'
     +'<div style="color:var(--gold);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Current Snapshot</div>'
     +portRows
@@ -1683,7 +1701,7 @@ function setupHTML(){
     +'<div class="card" style="margin-bottom:10px">'
     +'<div style="color:var(--text);font-size:14px;font-weight:700;margin-bottom:4px">Import from JSON</div>'
     +'<div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:14px">Restore a previous backup. <b style="color:var(--red)">Replaces all current data.</b></div>'
-    +'<label for="import-file" style="display:block;width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue);cursor:pointer;text-align:center;box-sizing:border-box">&#11014; Choose Backup File</label>'
+    +'<label for="import-file" onclick="expectExternalUi()" style="display:block;width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue);cursor:pointer;text-align:center;box-sizing:border-box">&#11014; Choose Backup File</label>'
     +'<input type="file" id="import-file" accept=".json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden" onchange="importData(event)"></div>'
     +'<div class="section-label">Data Health Check</div>'
     +'<div class="card" style="margin-bottom:10px">'+dataHealthHTML()+'</div>'
@@ -1721,7 +1739,7 @@ function updateCapitalRowLimit(v){
   saveState();render();
 }
 function showModal(h){const m=document.getElementById('modal');m.style.display='flex';m.innerHTML=`<div class="modal" onclick="event.stopPropagation()">${h}</div>`;m.onclick=closeModal;}
-function closeModal(){document.getElementById('modal').style.display='none';}
+function closeModal(){document.getElementById('modal').style.display='none';if(_askResolve){const r=_askResolve;_askResolve=null;r(null);}}
 
 function openAddPortfolio(){
   showModal(`<div class="modal-handle"></div><div class="modal-title">New Portfolio</div>
@@ -2276,6 +2294,7 @@ function exportData(){
   showToast('Backup downloaded ✓');render();
 }
 function importData(e){
+  _externalUiUntil=0;markActive();
   const file=e.target.files[0];if(!file)return;
   const r=new FileReader();
   r.onload=function(ev){
@@ -3115,11 +3134,19 @@ function dismissInstall(){showInstallBanner=false;localStorage.setItem('saf_inst
 // ═══════════════════════════════════════════════════════════════
 const PWD_KEY = 'ipt_pwd_v1'; // legacy 32-bit hash — only read to migrate, then removed
 const PWD_REC_KEY = 'ipt_pwd_v2';
+const BIO_KEY = 'ipt_bio';
+const AUTOLOCK_KEY = 'ipt_autolock';
 const DEFAULT_PWD = '1234Abc';
 const PBKDF2_ITER = 310000;
 const HAS_SUBTLE = !!(window.crypto && crypto.subtle);
 let _unlocked = false;
-let _sessionKey = null; // AES-GCM key derived from the password; lives in memory only while unlocked
+// KEY MODEL — secrets (the Gist token) are encrypted with one random AES-GCM "data key". That data
+// key is stored only in wrapped (encrypted) form, once per unlock method:
+//   • wrapped by a key derived from the password (PBKDF2)          → ipt_pwd_v2.dekWrap
+//   • wrapped by a key from the biometric passkey (WebAuthn PRF)   → ipt_bio.dekWrap
+// Either method can unwrap it, and changing the password only re-wraps it — nothing else changes.
+// The unwrapped data key lives in memory only while the app is unlocked.
+let _sessionKey = null;
 
 // Legacy hash — kept only to verify passwords set before the PBKDF2 upgrade (or when WebCrypto is
 // unavailable, e.g. plain-http hosting).
@@ -3136,34 +3163,61 @@ function getStoredHash(){
 
 function b64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)));}
 function unb64(s){return Uint8Array.from(atob(s), c => c.charCodeAt(0));}
+function b64url(buf){return b64(buf).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function unb64url(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return unb64(s);}
 function loadPwdRecord(){
   try{ const r = JSON.parse(localStorage.getItem(PWD_REC_KEY)); return r && r.salt && r.hash ? r : null; }
   catch(e){ return null; }
 }
-// PBKDF2-SHA256 → 512 bits: the first half is stored as the verifier, the second half becomes the
-// AES-GCM key that encrypts the Gist token. The key half is never written anywhere.
+// PBKDF2-SHA256 → 512 bits: the first half is stored as the verifier, the second half is the key
+// that wraps the data key. Neither the key half nor the password is written anywhere.
 async function derivePwd(pwd, saltBytes, iter){
   const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pwd), 'PBKDF2', false, ['deriveBits']);
   const bits = new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2', hash:'SHA-256', salt:saltBytes, iterations:iter}, base, 512));
-  const key = await crypto.subtle.importKey('raw', bits.slice(32), {name:'AES-GCM'}, false, ['encrypt','decrypt']);
-  return { hash: b64(bits.slice(0, 32)), key };
+  const kek = await crypto.subtle.importKey('raw', bits.slice(32), {name:'AES-GCM'}, false, ['encrypt','decrypt']);
+  return { hash: b64(bits.slice(0, 32)), kek };
 }
-async function createPwdRecord(pwd){
+function newDataKey(){ return crypto.subtle.generateKey({name:'AES-GCM', length:256}, true, ['encrypt','decrypt']); }
+async function wrapKey(kek, dek){ return encryptWith(kek, new Uint8Array(await crypto.subtle.exportKey('raw', dek))); }
+async function unwrapKey(kek, wrap){
+  const raw = await crypto.subtle.decrypt({name:'AES-GCM', iv: unb64(wrap.iv)}, kek, unb64(wrap.ct));
+  return crypto.subtle.importKey('raw', raw, {name:'AES-GCM'}, true, ['encrypt','decrypt']);
+}
+async function encryptWith(key, bytes){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, bytes);
+  return { iv: b64(iv), ct: b64(ct) };
+}
+async function createPwdRecord(pwd, dek){
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const d = await derivePwd(pwd, salt, PBKDF2_ITER);
-  localStorage.setItem(PWD_REC_KEY, JSON.stringify({ salt: b64(salt), iter: PBKDF2_ITER, hash: d.hash, isDefault: pwd === DEFAULT_PWD }));
+  localStorage.setItem(PWD_REC_KEY, JSON.stringify({ salt: b64(salt), iter: PBKDF2_ITER, hash: d.hash, isDefault: pwd === DEFAULT_PWD, dekWrap: await wrapKey(d.kek, dek) }));
   localStorage.removeItem(PWD_KEY);
-  return d.key;
 }
-// Returns {ok, key}. Transparently upgrades a legacy-hash password to a PBKDF2 record on success.
+// Returns {ok, key} where key is the data key. Upgrades older records transparently:
+//   legacy 32-bit hash        → new PBKDF2 record with a fresh data key
+//   PBKDF2 without a data key → token was encrypted with the password key itself; re-encrypt it
+//                               under a fresh data key and store that key wrapped
 async function verifyPwd(pwd){
   const rec = HAS_SUBTLE ? loadPwdRecord() : null;
   if(rec){
     const d = await derivePwd(pwd, unb64(rec.salt), rec.iter || PBKDF2_ITER);
-    return d.hash === rec.hash ? { ok: true, key: d.key } : { ok: false };
+    if(d.hash !== rec.hash) return { ok: false };
+    if(rec.dekWrap) return { ok: true, key: await unwrapKey(d.kek, rec.dekWrap) };
+    const dek = await newDataKey();
+    if(syncConfig.tokenEnc){
+      try{ syncConfig.token = await decryptSecret(syncConfig.tokenEnc, d.kek); syncConfig.tokenEnc = await encryptSecret(syncConfig.token, dek); saveSyncConfig(syncConfig); }
+      catch(e){ console.warn('Could not migrate the Gist token:', e); }
+    }
+    rec.dekWrap = await wrapKey(d.kek, dek);
+    localStorage.setItem(PWD_REC_KEY, JSON.stringify(rec));
+    return { ok: true, key: dek };
   }
   if(hashPwd(pwd) !== getStoredHash()) return { ok: false };
-  return { ok: true, key: HAS_SUBTLE ? await createPwdRecord(pwd) : null };
+  if(!HAS_SUBTLE) return { ok: true, key: null };
+  const dek = await newDataKey();
+  await createPwdRecord(pwd, dek);
+  return { ok: true, key: dek };
 }
 function isDefaultPwd(){
   const rec = loadPwdRecord();
@@ -3171,13 +3225,9 @@ function isDefaultPwd(){
   return !localStorage.getItem(PWD_KEY);
 }
 
-async function encryptSecret(text){
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, _sessionKey, new TextEncoder().encode(text));
-  return { iv: b64(iv), ct: b64(ct) };
-}
-async function decryptSecret(enc){
-  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv: unb64(enc.iv)}, _sessionKey, unb64(enc.ct));
+async function encryptSecret(text, key){ return encryptWith(key || _sessionKey, new TextEncoder().encode(text)); }
+async function decryptSecret(enc, key){
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv: unb64(enc.iv)}, key || _sessionKey, unb64(enc.ct));
   return new TextDecoder().decode(pt);
 }
 // After unlock: decrypt the stored Gist token into memory, or encrypt a legacy plaintext one.
@@ -3192,7 +3242,50 @@ async function unlockSyncToken(){
     showToast('Gist token could not be decrypted — reconnect in Setup', true);
   }
 }
+// Some actions need the data key (connecting or using Gist sync). After a biometric unlock without
+// PRF support the key isn't in memory, so ask for the password once and keep it for the session.
+async function ensureSessionKey(reason){
+  if(_sessionKey || !HAS_SUBTLE) return true;
+  const pwd = await askPassword('Enter your password', reason);
+  if(pwd == null) return false;
+  const res = await verifyPwd(pwd);
+  if(!res.ok){ showToast('Incorrect password', true); return false; }
+  _sessionKey = res.key;
+  await unlockSyncToken();
+  return true;
+}
+let _askResolve = null;
+function askPassword(title, message){
+  return new Promise(resolve => {
+    _askResolve = resolve;
+    showModal(`<div class="modal-handle"></div><div class="modal-title">${escHTML(title)}</div>
+      ${message ? `<div style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:16px">${escHTML(message)}</div>` : ''}
+      <div class="field"><label>Password</label><input id="ask-pwd" type="password" placeholder="Your app password" onkeydown="if(event.key==='Enter')submitAskPassword()"></div>
+      <button class="btn btn-gold" onclick="submitAskPassword()">Continue</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>`);
+    setTimeout(() => { const i = document.getElementById('ask-pwd'); if(i) i.focus(); }, 50);
+  });
+}
+function submitAskPassword(){
+  const v = document.getElementById('ask-pwd').value;
+  if(!v){ showToast('Enter your password', true); return; }
+  const r = _askResolve; _askResolve = null;
+  document.getElementById('modal').style.display = 'none';
+  if(r) r(v);
+}
 
+// Shared by password and biometric unlock
+async function finishUnlock(key){
+  _unlocked = true;
+  _sessionKey = key;
+  markActive();
+  await unlockSyncToken();
+  document.getElementById('lock-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('lock-error').textContent = '';
+  render();
+  if(isDefaultPwd()) showToast('You are using the default password — change it in Setup', true);
+}
 async function doUnlock(){
   const inp = document.getElementById('lock-input');
   const err = document.getElementById('lock-error');
@@ -3203,14 +3296,8 @@ async function doUnlock(){
   try{ res = await verifyPwd(val); }
   catch(e){ console.error(e); err.textContent = 'Could not verify password'; return; }
   if(res.ok){
-    _unlocked = true;
-    _sessionKey = res.key;
-    await unlockSyncToken();
-    document.getElementById('lock-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    err.textContent = '';
-    render();
-    if(isDefaultPwd()) showToast('You are using the default password — change it in Setup', true);
+    inp.value = '';
+    await finishUnlock(res.key);
   } else {
     err.textContent = 'Incorrect password — try again';
     inp.value = '';
@@ -3218,6 +3305,176 @@ async function doUnlock(){
     setTimeout(() => inp.classList.remove('shake'), 500);
     inp.focus();
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BIOMETRIC UNLOCK (WebAuthn passkey on this device's fingerprint / face sensor)
+// Needs a secure page (https or localhost) and a platform authenticator. Where the authenticator
+// supports the PRF extension, the passkey also yields a secret that unwraps the data key, so a
+// fingerprint unlocks everything. Without PRF it unlocks the app only, and Gist sync asks for the
+// password once per session. There is no server here, so the assertion is checked on the device:
+// challenge, origin, the "user verified" flag and the signature against the stored public key.
+// ═══════════════════════════════════════════════════════════════
+let _bioPlatform = null; // null = still checking, then true/false
+let _bioInFlight = false;
+function loadBio(){ try{ const r = JSON.parse(localStorage.getItem(BIO_KEY)); return r && r.credId ? r : null; }catch(e){ return null; } }
+function bioApiPresent(){ return HAS_SUBTLE && window.isSecureContext && !!window.PublicKeyCredential && !!navigator.credentials; }
+(async () => {
+  try{ _bioPlatform = bioApiPresent() && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); }
+  catch(e){ _bioPlatform = false; }
+  updateLockHint();
+  if(_unlocked && currentTab === 'setup') render();
+})();
+async function prfToKey(out){ return crypto.subtle.importKey('raw', new Uint8Array(out).slice(0, 32), {name:'AES-GCM'}, false, ['encrypt','decrypt']); }
+// WebAuthn ES256 signatures are DER-encoded; WebCrypto expects raw r||s (32 bytes each)
+function derToRawSig(der){
+  let p = 2; if(der[1] & 0x80) p += der[1] & 0x7f;
+  const read = () => { p++; const len = der[p++]; let v = der.slice(p, p + len); p += len;
+    while(v.length > 32 && v[0] === 0) v = v.slice(1);
+    const out = new Uint8Array(32); out.set(v, 32 - v.length); return out; };
+  const r = read(), s = read(), raw = new Uint8Array(64); raw.set(r, 0); raw.set(s, 32); return raw;
+}
+async function verifyAssertionSig(rec, resp){
+  if(!rec.pubKey || (rec.alg !== -7 && rec.alg !== -257)) return true; // no key recorded: rely on UV flag
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', resp.clientDataJSON));
+  const ad = new Uint8Array(resp.authenticatorData), data = new Uint8Array(ad.length + hash.length);
+  data.set(ad, 0); data.set(hash, ad.length);
+  const sig = new Uint8Array(resp.signature);
+  if(rec.alg === -7){
+    const k = await crypto.subtle.importKey('spki', unb64(rec.pubKey), {name:'ECDSA', namedCurve:'P-256'}, false, ['verify']);
+    return crypto.subtle.verify({name:'ECDSA', hash:'SHA-256'}, k, derToRawSig(sig), data);
+  }
+  const k = await crypto.subtle.importKey('spki', unb64(rec.pubKey), {name:'RSASSA-PKCS1-v1_5', hash:'SHA-256'}, false, ['verify']);
+  return crypto.subtle.verify('RSASSA-PKCS1-v1_5', k, sig, data);
+}
+// Runs the fingerprint / face prompt and checks the result. Returns the PRF output, if any.
+async function bioAssert(rec){
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  const opts = { challenge, allowCredentials: [{type:'public-key', id: unb64url(rec.credId)}], userVerification: 'required', timeout: 60000 };
+  if(rec.prf) opts.extensions = { prf: { eval: { first: unb64(rec.prfSalt) } } };
+  const a = await navigator.credentials.get({ publicKey: opts });
+  const cd = JSON.parse(new TextDecoder().decode(a.response.clientDataJSON));
+  if(cd.type !== 'webauthn.get' || cd.challenge !== b64url(challenge) || cd.origin !== location.origin) throw new Error('Biometric response did not match this request');
+  if(!(new Uint8Array(a.response.authenticatorData)[32] & 0x04)) throw new Error('The device did not confirm your fingerprint or face');
+  if(!(await verifyAssertionSig(rec, a.response))) throw new Error('Biometric signature check failed');
+  const ext = a.getClientExtensionResults ? a.getClientExtensionResults() : {};
+  return ext.prf && ext.prf.results ? ext.prf.results.first : null;
+}
+async function doBioUnlock(){
+  const rec = loadBio();
+  if(!rec || _bioInFlight || _unlocked) return;
+  const err = document.getElementById('lock-error');
+  _bioInFlight = true;
+  err.textContent = '';
+  try{
+    const out = await bioAssert(rec);
+    let key = null;
+    if(rec.prf && rec.dekWrap){
+      if(!out) throw new Error('Your device did not return the unlock secret — use your password');
+      key = await unwrapKey(await prfToKey(out), rec.dekWrap);
+    }
+    await finishUnlock(key);
+  }catch(e){
+    console.warn('Biometric unlock failed:', e);
+    err.textContent = e.name === 'NotAllowedError' ? 'Fingerprint / face cancelled — tap to try again, or use your password' : (e.message || 'Biometric unlock failed — use your password');
+  }finally{ _bioInFlight = false; }
+}
+async function enableBio(){
+  if(!bioApiPresent() || !_bioPlatform){ showToast('Biometric unlock is not available on this device or page', true); return; }
+  const pwd = await askPassword('Turn on biometric unlock', 'Confirm your password. Your phone will then ask for your fingerprint or face to create a passkey for this app.');
+  if(pwd == null) return;
+  const res = await verifyPwd(pwd);
+  if(!res.ok){ showToast('Incorrect password', true); return; }
+  if(res.key) _sessionKey = res.key;
+  _bioInFlight = true;
+  try{
+    const prfSalt = crypto.getRandomValues(new Uint8Array(32));
+    const cred = await navigator.credentials.create({ publicKey: {
+      rp: { name: 'Portfolio Tracker' },
+      user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'portfolio-tracker', displayName: 'Portfolio Tracker' },
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      pubKeyCredParams: [{type:'public-key', alg:-7}, {type:'public-key', alg:-257}],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
+      timeout: 60000, attestation: 'none',
+      extensions: { prf: { eval: { first: prfSalt } } },
+    }});
+    const r = cred.response;
+    const pub = r.getPublicKey ? r.getPublicKey() : null;
+    const rec = { credId: b64url(cred.rawId), prf: false, prfSalt: b64(prfSalt), pubKey: pub ? b64(pub) : null, alg: r.getPublicKeyAlgorithm ? r.getPublicKeyAlgorithm() : null, createdAt: new Date().toISOString(), dekWrap: null };
+    const ext = cred.getClientExtensionResults ? cred.getClientExtensionResults() : {};
+    if(ext.prf && ext.prf.enabled && res.key){
+      // Some authenticators return the PRF secret at creation; otherwise one more prompt fetches it
+      let out = ext.prf.results && ext.prf.results.first;
+      if(!out){ rec.prf = true; try{ out = await bioAssert(rec); }catch(e){ console.warn('PRF read failed:', e); out = null; } }
+      if(out){ rec.dekWrap = await wrapKey(await prfToKey(out), res.key); rec.prf = true; }
+      else rec.prf = false;
+    }
+    localStorage.setItem(BIO_KEY, JSON.stringify(rec));
+    updateLockHint();
+    render();
+    showToast(rec.prf ? 'Biometric unlock on ✓' : 'Biometric unlock on — Gist sync will ask for your password');
+  }catch(e){
+    console.warn('Passkey creation failed:', e);
+    showToast(e.name === 'NotAllowedError' ? 'Cancelled — biometric unlock not turned on' : 'Could not set up biometric unlock', true);
+  }finally{ _bioInFlight = false; markActive(); }
+}
+function disableBio(){
+  if(!confirm('Turn off biometric unlock on this device? You will unlock with your password. The passkey itself can be deleted from your phone\'s password manager (e.g. Google Password Manager → Portfolio Tracker).')) return;
+  localStorage.removeItem(BIO_KEY);
+  updateLockHint();
+  render();
+  showToast('Biometric unlock off');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTO-LOCK — locks after N minutes without a tap or key press, counting time spent in other
+// apps; or immediately on leaving the app. Stored per device. Default: 5 minutes.
+// ═══════════════════════════════════════════════════════════════
+const AUTOLOCK_OPTIONS = [['0','Never'],['leave','When I leave the app'],['1','After 1 minute'],['5','After 5 minutes'],['15','After 15 minutes'],['30','After 30 minutes']];
+let _lastActive = Date.now();
+// Leaving the page on purpose (fingerprint prompt, Android file picker for Import) must not trigger
+// "lock when I leave the app"
+let _externalUiUntil = 0;
+function expectExternalUi(){ _externalUiUntil = Date.now() + 120000; }
+function autoLockSetting(){ const v = localStorage.getItem(AUTOLOCK_KEY); return AUTOLOCK_OPTIONS.some(o => o[0] === v) ? v : '5'; }
+function setAutoLock(v){ localStorage.setItem(AUTOLOCK_KEY, v); markActive(); showToast('Auto-lock: ' + AUTOLOCK_OPTIONS.find(o => o[0] === v)[1].toLowerCase()); }
+function markActive(){ _lastActive = Date.now(); }
+function autoLockDue(){
+  const v = autoLockSetting(), mins = Number(v);
+  return _unlocked && mins > 0 && Date.now() - _lastActive >= mins * 60000;
+}
+['pointerdown','keydown','wheel','touchstart'].forEach(ev => window.addEventListener(ev, markActive, {passive:true, capture:true}));
+setInterval(() => { if(autoLockDue()) lockApp(); }, 15000);
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'hidden'){
+    if(_unlocked && autoLockSetting() === 'leave' && !_bioInFlight && Date.now() > _externalUiUntil) lockApp();
+    return;
+  }
+  if(autoLockDue()) lockApp();
+  else if(!_unlocked && loadBio()) setTimeout(doBioUnlock, 250);
+});
+function securityExtrasHTML(){
+  const bio = loadBio();
+  let bioBody;
+  if(!bioApiPresent()) bioBody = '<div style="color:var(--muted);font-size:12px;line-height:1.6">Not available here. Open the app from its secure web address (e.g. your GitHub Pages link), not as a file, on a device with fingerprint or face unlock.</div>';
+  else if(_bioPlatform === null) bioBody = '<div style="color:var(--muted);font-size:12px">Checking this device…</div>';
+  else if(bio) bioBody = '<div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:12px">'
+      + (bio.prf ? 'Your fingerprint or face unlocks the app and your Gist sync.' : 'Your fingerprint or face unlocks the app. This device can\'t release the sync key biometrically, so Gist Push / Pull asks for your password once per session.')
+      + ' Your password still works at any time.</div>'
+      + '<button class="btn btn-ghost" style="margin:0" onclick="disableBio()">Turn Off</button>';
+  else if(!_bioPlatform) bioBody = '<div style="color:var(--muted);font-size:12px;line-height:1.6">This device has no fingerprint or face unlock set up for apps. Set one up in your phone\'s settings, then reopen this page.</div>';
+  else bioBody = '<div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:12px">Unlock with your phone\'s fingerprint or face instead of typing your password. Your password keeps working as a fallback.</div>'
+      + '<button class="btn btn-gold" style="margin:0" onclick="enableBio()">Turn On</button>';
+  const sel = autoLockSetting();
+  return '<div class="card" style="margin-bottom:10px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="color:var(--text);font-size:14px;font-weight:700">Fingerprint / Face Unlock</div>'
+    + (bio ? '<span class="badge badge-green">On</span>' : '<span class="badge badge-dim">Off</span>') + '</div>'
+    + bioBody + '</div>'
+    + '<div class="card" style="margin-bottom:10px">'
+    + '<div style="color:var(--text);font-size:14px;font-weight:700;margin-bottom:4px">Auto-Lock</div>'
+    + '<div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:12px">Locks the app when it\'s left idle (time in other apps counts) so nobody can open it on your unlocked phone. An unsaved form is closed when it locks.</div>'
+    + '<select class="sel" style="width:100%" onchange="setAutoLock(this.value)">' + AUTOLOCK_OPTIONS.map(o => '<option value="' + o[0] + '"' + (o[0] === sel ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>'
+    + '</div>';
 }
 
 function toggleLockEye(){
@@ -3252,6 +3509,7 @@ function lockApp(){
   _unlocked = false;
   _sessionKey = null;
   if(syncConfig.tokenEnc) syncConfig.token = ''; // drop the decrypted token from memory
+  closeModal();
   updateLockHint();
   document.getElementById('app').style.display = 'none';
   document.getElementById('fab').style.display = 'none';
@@ -3262,7 +3520,10 @@ function lockApp(){
   inp.type = 'password';
   document.getElementById('lock-eye').textContent = '👁';
   document.getElementById('lock-error').textContent = '';
-  setTimeout(() => inp.focus(), 100);
+  // With biometrics on, go straight to the fingerprint prompt (if the app is on screen) instead of
+  // popping up the keyboard
+  if(loadBio()){ if(document.visibilityState === 'visible') setTimeout(doBioUnlock, 250); }
+  else setTimeout(() => inp.focus(), 100);
 }
 
 async function changePassword(oldPwd, newPwd, confirmPwd){
@@ -3275,13 +3536,15 @@ async function changePassword(oldPwd, newPwd, confirmPwd){
   if(newPwd !== confirmPwd){
     showToast('New passwords do not match', true); return;
   }
-  if(!(await verifyPwd(oldPwd)).ok){
+  const res = await verifyPwd(oldPwd);
+  if(!res.ok){
     showToast('Current password is incorrect', true); return;
   }
   if(HAS_SUBTLE){
-    // New password → new AES key, so the Gist token is re-encrypted under it
-    _sessionKey = await createPwdRecord(newPwd);
-    if(syncConfig.token){ syncConfig.tokenEnc = await encryptSecret(syncConfig.token); saveSyncConfig(syncConfig); }
+    // Same data key, re-wrapped under the new password — the token and biometric unlock are unaffected
+    await createPwdRecord(newPwd, res.key);
+    _sessionKey = res.key;
+    await unlockSyncToken();
   } else {
     localStorage.setItem(PWD_KEY, hashPwd(newPwd));
   }
@@ -3294,22 +3557,32 @@ function openChangePwd(){
   showModal(`<div class="modal-handle"></div>
   <div class="modal-title">Change Password</div>
   <div class="field"><label>Current Password</label><input id="pwd-old" type="password" placeholder="Current password"></div>
-  <div class="field"><label>New Password</label><input id="pwd-new" type="password" placeholder="Min. 4 characters"></div>
+  <div class="field"><label>New Password</label><input id="pwd-new" type="password" placeholder="Min. 6 characters"></div>
   <div class="field"><label>Confirm New Password</label><input id="pwd-confirm" type="password" placeholder="Repeat new password"></div>
   <button class="btn btn-gold" onclick="changePassword(document.getElementById('pwd-old').value,document.getElementById('pwd-new').value,document.getElementById('pwd-confirm').value)">Save New Password</button>
   <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>`);
 }
 
 // The default-password hint only shows until the password has been changed
+// …and the fingerprint button only while biometric unlock is set up and usable here
 function updateLockHint(){
   const el = document.getElementById('lock-hint');
   if(el) el.textContent = isDefaultPwd() ? 'Default password: ' + DEFAULT_PWD : '';
+  const bioOn = !!loadBio() && bioApiPresent();
+  const btn = document.getElementById('lock-bio-btn'), or = document.getElementById('lock-or');
+  if(btn) btn.style.display = bioOn ? 'flex' : 'none';
+  if(or) or.style.display = bioOn ? 'block' : 'none';
+  const pb = document.getElementById('lock-btn'), sub = document.getElementById('lock-sub');
+  if(pb) pb.classList.toggle('secondary', bioOn);
+  if(sub) sub.textContent = 'Salim Al-Aufi · ' + (bioOn ? 'Unlock to continue' : 'Enter password to continue');
 }
 updateLockHint();
 
-// Focus password field on load
+// On open: fingerprint prompt if biometrics are on, otherwise focus the password field
 window.addEventListener('load', () => {
   setTimeout(() => {
+    if(_unlocked) return;
+    if(loadBio() && bioApiPresent()){ doBioUnlock(); return; }
     const inp = document.getElementById('lock-input');
     if(inp) inp.focus();
   }, 300);
